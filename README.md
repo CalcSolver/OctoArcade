@@ -16,6 +16,9 @@ Custom icons and thumbnails for every game
 Weekly updates — new games every weekend
 
  Stealth & school‑friendly modes
+Proxies that bypass internet cencorship
+> [!TIP]
+> Proxies are just unblockers
 
  🧩 Folder Structure
 Folder	Purpose
