@@ -1,5 +1,5 @@
 # 🎮 OctoArcade
-Unblocked Games Platform — Powered by CalcSolver
+## Unblocked Games Platform — Powered by CalcSolver
 
 Welcome to OctoArcade, a massive collection of browser‑based games built for speed, creativity, and fun.
 This project started as Wii and evolved into a full‑scale arcade with thousands of games, bookmarklets, and tools.
