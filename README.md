@@ -38,6 +38,11 @@ Production build: wii‑eta.vercel.app
 All games belong to their original creators.
 OctoArcade simply provides a unified, accessible interface for educational and entertainment purposes.
 
+#Octo Arcade can be deployed and spread easily since it can be used just from the index.html and it static
+[![Vercel Deploy](https://vercel.com)](https://vercel.com)
+
+[![Netlify Status](https://netlify.com)](https://netlify.com)
+
 # ⚠️ Disclaimer
 I do not own any of these games and do not condone gaming addiction.
 This project is for learning, creativity, and fun only.
