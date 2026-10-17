@@ -50,3 +50,5 @@ Expand bookmarklet library
 Introduce OctoArcade Originals (custom remakes)
 
 Add pc games like The Simpsons Hit and Run and GTAV
+
+> **💡 FYI:** To use a proxy/Unblocker you change the search engine to DuckDuckGo because there is no bot verification and switch to ultraviolet because it loads sites better. Also many proxies redirect you and usually break rules in an ict code of conduct
