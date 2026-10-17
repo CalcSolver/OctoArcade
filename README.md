@@ -1,4 +1,4 @@
-🎮 OctoArcade
+#🎮 OctoArcade#
 Unblocked Games Platform — Powered by CalcSolver
 
 Welcome to OctoArcade, a massive collection of browser‑based games built for speed, creativity, and fun.
