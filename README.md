@@ -7,17 +7,17 @@ This project started as Wii and evolved into a full‑scale arcade with thousand
 ### 🚀 Features
 3K+ HTML5 games organized by category
 
-### Bookmarklet hub with fun, hacker‑style tools
+ Bookmarklet hub with fun, hacker‑style tools
 
-### Custom icons and thumbnails for every game
+Custom icons and thumbnails for every game
 
-### Fast loading with optimized scripts and caching
+ Fast loading with optimized scripts and caching
 
-### Weekly updates — new games every weekend
+Weekly updates — new games every weekend
 
-### Stealth & school‑friendly modes
+ Stealth & school‑friendly modes
 
-### 🧩 Folder Structure
+ 🧩 Folder Structure
 Folder	Purpose
 /Games	All playable game files
 /Icon	Game thumbnails and icons
