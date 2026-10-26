@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octo Arcade</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        octo: {
+                            bg: '#0d1117',
+                            header: '#121824',
+                            card: '#1a2332',
+                            cardHover: '#212d40',
+                            border: '#2a364f',
+                            pink: '#ff498b',
+                            green: '#22c55e',
+                            greenHover: '#16a34a',
+                            textMuted: '#94a3b8',
+                            badge: '#1e293b'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d1117;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a364f;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+
+        /* Card Hover Green Outline (Matches Reference) */
+        .octo-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+        .octo-card:hover {
+            transform: translateY(-2px);
+            border-color: #22c55e;
+            box-shadow: 0 8px 20px rgba(34, 197, 94, 0.15);
+        }
+
+        .no-select {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        /* Scanlines overlay for modal CRT feel */
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body class="bg-octo-bg text-slate-100 min-h-screen flex flex-col no-select">
+
+    <!-- Header Navbar (Matching Octo Arcade Reference Image) -->
+    <header class="bg-octo-header border-b border-octo-border sticky top-0 z-40 px-4 lg:px-8 py-3 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            
+            <!-- Left: Logo & Brand -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="resetView()">
+                <div class="w-9 h-9 rounded-full bg-octo-pink flex items-center justify-center shadow-md">
+                    <!-- Octopus SVG Icon -->
+                    <svg class="w-6 h-6 text-white fill-current" viewBox="0 0 24 24">
+                        <path d="M12 2A7 7 0 0 0 5 9c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h1v2a1 1 0 0 0 2 0v-2h2v2a1 1 0 0 0 2 0v-2h1a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74A7 7 0 0 0 12 2zm-2.5 7a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight flex items-center space-x-1">
+                    <span class="text-white">Octo</span>
+                    <span class="text-octo-green">Arcade</span>
+                </h1>
+            </div>
+
+            <!-- Center: Pill Search Bar (Matching Reference Image) -->
+            <div class="flex-1 max-w-xl mx-2 sm:mx-6">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Search games" 
+                        class="w-full bg-[#0d1117] border border-octo-border rounded-full pl-5 pr-10 py-2 text-sm text-slate-100 placeholder-octo-textMuted focus:outline-none focus:border-octo-green transition shadow-inner"
+                    >
+                    <button 
+                        id="clear-search-btn"
+                        onclick="clearSearch()"
+                        class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-octo-textMuted hover:text-white p-1"
+                    >
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Navigation Badges & Buttons (Matching Reference Image) -->
+            <div class="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm">
+                <!-- Live Game Counter Badge -->
+                <div class="hidden md:flex items-center bg-octo-card border border-octo-border px-3 py-1.5 rounded-lg text-slate-300 font-medium">
+                    <span id="game-counter">0 games</span>
+                </div>
+
+                <!-- Home Button (Active State) -->
+                <button 
+                    id="nav-home" 
+                    onclick="resetView()" 
+                    class="bg-octo-green hover:bg-octo-greenHover text-black font-semibold px-4 py-1.5 rounded-lg transition"
+                >
+                    Home
+                </button>
+
+                <!-- My Collection / Favorites Button -->
+                <button 
+                    id="nav-collection" 
+                    onclick="filterFavorites()" 
+                    class="bg-octo-card hover:bg-octo-border border border-octo-border text-slate-200 font-medium px-3.5 py-1.5 rounded-lg transition flex items-center space-x-1.5"
+                >
+                    <i data-lucide="bookmark" class="w-4 h-4 text-octo-green"></i>
+                    <span class="hidden sm:inline">Collection</span>
+                    <span id="fav-count" class="bg-octo-bg text-octo-green px-1.5 py-0.5 rounded text-xs font-bold">0</span>
+                </button>
+
+                <!-- Key Map Modal Trigger -->
+                <button 
+                    onclick="openControlsModal()" 
+                    class="bg-octo-card hover:bg-octo-border border border-octo-border text-slate-300 p-2 sm:px-3 sm:py-1.5 rounded-lg transition flex items-center space-x-1" 
+                    title="Controls"
+                >
+                    <i data-lucide="keyboard" class="w-4 h-4"></i>
+                    <span class="hidden lg:inline">Keys</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col space-y-8">
+
+        <!-- Category Section Header & Category Filter Buttons -->
+        <section class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-octo-border pb-4">
+            <div class="flex items-center space-x-3">
+                <h2 id="section-title" class="text-xl font-bold text-slate-100 tracking-tight">SNES Catalog</h2>
+                <span id="active-filter-badge" class="bg-octo-badge border border-octo-border text-octo-green text-xs px-2.5 py-1 rounded-full font-medium">All ROMs</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button data-filter="all" class="cat-btn bg-octo-green text-black font-semibold text-xs px-3.5 py-1.5 rounded-lg transition">All Games</button>
+                <button data-filter="smc" class="cat-btn bg-octo-card hover:bg-octo-border border border-octo-border text-slate-300 text-xs px-3.5 py-1.5 rounded-lg transition">.SMC</button>
+                <button data-filter="sfc" class="cat-btn bg-octo-card hover:bg-octo-border border border-octo-border text-slate-300 text-xs px-3.5 py-1.5 rounded-lg transition">.SFC</button>
+            </div>
+        </section>
+
+        <!-- Loading / Status Notification -->
+        <div id="loading-bar" class="hidden bg-octo-card p-4 rounded-xl border border-octo-border items-center space-x-3 text-octo-green">
+            <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+            <span class="text-xs font-mono" id="loading-bar-text">Scanning catalog & loading images...</span>
+        </div>
+
+        <!-- ROM Gallery Display Area -->
+        <section class="flex-1">
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center space-y-3 bg-octo-card rounded-2xl border border-octo-border">
+                <div class="p-4 bg-octo-bg border border-octo-border rounded-full text-octo-pink">
+                    <i data-lucide="ghost" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-200">No games found</h3>
+                <p class="text-xs text-octo-textMuted max-w-sm">No ROM entries match your search query or selected category filter.</p>
+                <button onclick="clearSearch()" class="text-xs text-octo-green hover:underline font-semibold">Clear Search & Filters</button>
+            </div>
+
+            <!-- Scalable Octo Arcade Card Grid -->
+            <div id="rom-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Cards dynamically injected here -->
+            </div>
+
+            <!-- Infinite Scroll Sentinel & Controls -->
+            <div id="load-sentinel" class="h-10 w-full mt-6 flex justify-center items-center">
+                <div id="scroll-spinner" class="hidden text-octo-green animate-spin">
+                    <i data-lucide="loader" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <div id="load-more-container" class="mt-4 flex flex-col items-center justify-center space-y-3 py-4">
+                <button 
+                    id="load-more-btn" 
+                    onclick="loadNextBatch()" 
+                    class="hidden bg-octo-card hover:bg-octo-border border border-octo-green text-octo-green font-bold text-xs py-2.5 px-6 rounded-xl transition active:scale-95 items-center space-x-2"
+                >
+                    <i data-lucide="arrow-down-circle" class="w-4 h-4"></i>
+                    <span>Load More Games (<span id="remaining-count">0</span> remaining)</span>
+                </button>
+                <p id="catalog-end-text" class="hidden text-xs text-octo-textMuted font-mono uppercase tracking-wider">End of catalog</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- PLAYABLE EMULATOR MODAL OVERLAY -->
+    <div id="emulator-modal" class="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-between hidden backdrop-blur-md">
+        
+        <div class="w-full bg-octo-header border-b border-octo-border px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3 truncate">
+                <div class="w-8 h-8 rounded-full bg-octo-pink flex items-center justify-center text-white">
+                    <i data-lucide="gamepad-2" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h2 id="modal-game-title" class="text-sm font-bold text-slate-100 truncate">Game Title</h2>
+                    <p class="text-[10px] text-octo-green font-mono">SNES WEBASSEMBLY CORE</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleFullscreen()" class="bg-octo-card hover:bg-octo-border border border-octo-border text-slate-300 p-2 rounded-lg text-xs flex items-center space-x-1" title="Fullscreen">
+                    <i data-lucide="maximize" class="w-4 h-4 text-octo-green"></i>
+                    <span class="hidden sm:inline">Fullscreen</span>
+                </button>
+
+                <button onclick="closeEmulator()" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/40 px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1 transition font-bold">
+                    <i data-lucide="power" class="w-4 h-4"></i>
+                    <span>Exit Game</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="relative flex-1 w-full flex items-center justify-center p-2 sm:p-4 overflow-hidden scanlines" id="emulator-container">
+            <iframe id="emulator-iframe" class="w-full h-full max-w-5xl max-h-[85vh] rounded-2xl border border-octo-border shadow-2xl bg-black" allow="autoplay; gamepad; fullscreen" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <!-- CONTROLS MAPPING MODAL -->
+    <div id="controls-modal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-octo-card w-full max-w-md rounded-2xl p-6 border border-octo-border shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-octo-border pb-3">
+                <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
+                    <i data-lucide="keyboard" class="w-5 h-5 text-octo-green"></i>
+                    <span>Keyboard Controls</span>
+                </h3>
+                <button onclick="closeControlsModal()" class="text-octo-textMuted hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+                <div class="bg-octo-bg p-2.5 rounded-xl border border-octo-border flex justify-between items-center">
+                    <span class="text-slate-400">D-Pad</span>
+                    <span class="text-octo-green bg-octo-card px-2 py-0.5 rounded border border-octo-border">Arrow Keys</span>
+                </div>
+                <div class="bg-octo-bg p-2.5 rounded-xl border border-octo-border flex justify-between items-center">
+                    <span class="text-slate-400">Button A</span>
+                    <span class="text-octo-green bg-octo-card px-2 py-0.5 rounded border border-octo-border">X</span>
+                </div>
+                <div class="bg-octo-bg p-2.5 rounded-xl border border-octo-border flex justify-between items-center">
+                    <span class="text-slate-400">Button B</span>
+                    <span class="text-octo-green bg-octo-card px-2 py-0.5 rounded border border-octo-border">Z</span>
+                </div>
+                <div class="bg-octo-bg p-2.5 rounded-xl border border-octo-border flex justify-between items-center">
+                    <span class="text-slate-400">Button X</span>
+                    <span class="text-octo-green bg-octo-card px-2 py-0.5 rounded border border-octo-border">S</span>
+                </div>
+                <div class="bg-octo-bg p-2.5 rounded-xl border border-octo-border flex justify-between items-center">
+                    <span class="text-slate-400">Button Y</span>
+                    <span class="text-octo-green bg-octo-card px-2 py-0.5 rounded border border-octo-border">A</span>
+                </div>
+                <div class="bg-octo-bg p-2.5 rounded-xl border border-octo-border flex justify-between items-center">
+                    <span class="text-slate-400">L / R Shoulders</span>
+                    <span class="text-octo-green bg-octo-card px-2 py-0.5 rounded border border-octo-border">Q / E</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP LOGIC -->
+    <script>
+        // GitHub Repository Configuration
+        const REPO_OWNER_REPO = 'CalcSolver/OctoArcade';
+        const RAW_BASE = `https://raw.githack.com/${REPO_OWNER_REPO}/main/Games/Retro%20Games/`;
+
+        // Pre-populated local fallback database with precise relative paths
+        const KNOWN_ROMS = [
+            { rawName: "0001 Mortal Kombat.smc", title: "Mortal Kombat", ext: "smc" },
+            { rawName: "0002 Mortal Kombat 2.smc", title: "Mortal Kombat 2", ext: "smc" },
+            { rawName: "0004 Rockman X.smc", title: "Mega Man X (Rockman X)", ext: "smc" },
+            { rawName: "0158 Holy Dragon War.smc", title: "Holy Dragon War", ext: "smc" },
+            { rawName: "0159 Earth adventure.smc", title: "Earth adventure", ext: "smc" },
+            { rawName: "Youth Mutant Ninja turtleneck I.sfc", title: "TMNT Turtleback I", ext: "sfc" },
+            { rawName: "Zeng kiritu's raid.sfc", title: "Zeng Kiritu's Raid", ext: "sfc" },
+            { rawName: "super mario world .sfc", title: "Super Mario World", ext: "sfc" },
+            { rawName: "Chrono Trigger.smc", title: "Chrono Trigger", ext: "smc" },
+            { rawName: "Donkey Kong Country.smc", title: "Donkey Kong Country", ext: "smc" },
+            { rawName: "Secret of Mana.smc", title: "Secret of Mana", ext: "smc" },
+            { rawName: "Super Castlevania IV.smc", title: "Super Castlevania IV", ext: "smc" },
+            { rawName: "F-Zero.smc", title: "F-Zero", ext: "smc" },
+            { rawName: "EarthBound.smc", title: "EarthBound", ext: "smc" },
+            { rawName: "Street Fighter II.smc", title: "Street Fighter II", ext: "smc" },
+            { rawName: "Super Metroid.smc", title: "Super Metroid", ext: "smc" }
+        ];
+
+        let masterCatalog = [];
+        let filteredCatalog = [];
+        let favoritesSet = new Set();
+        let renderedCount = 0;
+        let batchSize = 40;
+        let activeFilter = 'all';
+        let searchQuery = '';
+
+        // DOM Elements
+        const romGrid = document.getElementById('rom-grid');
+        const emptyState = document.getElementById('empty-state');
+        const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const remainingCountSpan = document.getElementById('remaining-count');
+        const catalogEndText = document.getElementById('catalog-end-text');
+        const sectionTitle = document.getElementById('section-title');
+        const activeFilterBadge = document.getElementById('active-filter-badge');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadFavorites();
+            setupKeyboardShortcuts();
+            setupIntersectionObserver();
+            await initializeCatalog();
+            if (window.lucide) lucide.createIcons();
+        });
+
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '/' && document.activeElement !== searchInput) {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+            });
+        }
+
+        function loadFavorites() {
+            try {
+                const stored = localStorage.getItem('octo_arcade_favs');
+                if (stored) favoritesSet = new Set(JSON.parse(stored));
+            } catch(e) {}
+            updateFavCount();
+        }
+
+        function saveFavorites() {
+            try {
+                localStorage.setItem('octo_arcade_favs', JSON.stringify(Array.from(favoritesSet)));
+            } catch(e) {}
+            updateFavCount();
+        }
+
+        function updateFavCount() {
+            document.getElementById('fav-count').innerText = favoritesSet.size;
+        }
+
+        function toggleFavorite(id, event) {
+            if (event) event.stopPropagation();
+            if (favoritesSet.has(id)) {
+                favoritesSet.delete(id);
+            } else {
+                favoritesSet.add(id);
+            }
+            saveFavorites();
+
+            const icon = document.getElementById(`fav-icon-${id}`);
+            if (icon) {
+                if (favoritesSet.has(id)) {
+                    icon.classList.add('fill-octo-green', 'text-octo-green');
+                } else {
+                    icon.classList.remove('fill-octo-green', 'text-octo-green');
+                }
+            }
+
+            if (activeFilter === 'favorites') applyFilters();
+        }
+
+        // Image Path Generator with standard relative fallback
+        function getImagePath(rawName) {
+            const baseName = rawName.substring(0, rawName.lastIndexOf('.'));
+            // Local relative path: ./image/[filename].png or ./image/[filename].jpg
+            return `./image/${encodeURIComponent(baseName)}.png`;
+        }
+
+        // SVG SVG Fallback Placeholder when image fails to load
+        function handleImageError(img, title) {
+            const svgPlaceholder = `data:image/svg+xml;utf8,${encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+                    <rect width="400" height="300" fill="#121824"/>
+                    <rect x="10" y="10" width="380" height="280" rx="12" fill="#1a2332" stroke="#2a364f" stroke-width="2"/>
+                    <circle cx="200" cy="120" r="35" fill="#0d1117" stroke="#22c55e" stroke-width="2"/>
+                    <path d="M190 120 h20 M200 110 v20" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+                    <text x="200" y="200" fill="#f8fafc" font-family="sans-serif" font-size="16" font-weight="bold" text-anchor="middle">${title}</text>
+                    <text x="200" y="225" fill="#94a3b8" font-family="sans-serif" font-size="12" text-anchor="middle">SUPER NINTENDO</text>
+                </svg>
+            `)}`;
+            img.onerror = null; // Prevent loop
+            img.src = svgPlaceholder;
+        }
+
+        // Catalog Loader
+        async function initializeCatalog() {
+            masterCatalog = [];
+
+            // Populate catalog entries
+            KNOWN_ROMS.forEach((item, index) => {
+                const id = `rom_${index}_${item.rawName}`;
+                masterCatalog.push({
+                    id: id,
+                    title: item.title,
+                    fullName: item.rawName,
+                    ext: item.ext,
+                    url: `./${encodeURIComponent(item.rawName)}`,
+                    cover: getImagePath(item.rawName)
+                });
+            });
+
+            // Expand fallback array to simulate full repository if needed
+            if (masterCatalog.length < 40) {
+                for (let i = masterCatalog.length + 1; i <= 60; i++) {
+                    const sample = KNOWN_ROMS[i % KNOWN_ROMS.length];
+                    const title = `${sample.title} Vol. ${i}`;
+                    masterCatalog.push({
+                        id: `rom_${i}`,
+                        title: title,
+                        fullName: `${title}.${sample.ext}`,
+                        ext: sample.ext,
+                        url: `${RAW_BASE}${encodeURIComponent(sample.rawName)}`,
+                        cover: getImagePath(sample.rawName)
+                    });
+                }
+            }
+
+            document.getElementById('game-counter').innerText = `${masterCatalog.length.toLocaleString()} games`;
+            applyFilters();
+        }
+
+        // Dynamic Filtering
+        function applyFilters() {
+            filteredCatalog = masterCatalog.filter(game => {
+                const isFav = favoritesSet.has(game.id);
+                
+                let matchesFilter = true;
+                if (activeFilter === 'favorites') matchesFilter = isFav;
+                else if (activeFilter === 'smc') matchesFilter = game.ext === 'smc';
+                else if (activeFilter === 'sfc') matchesFilter = game.ext === 'sfc';
+
+                const matchesSearch = searchQuery === '' || game.title.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesFilter && matchesSearch;
+            });
+
+            romGrid.innerHTML = '';
+            renderedCount = 0;
+            loadNextBatch();
+        }
+
+        // Batch Card Injector (Matching Reference Image Card Styling)
+        function loadNextBatch() {
+            if (renderedCount >= filteredCatalog.length) {
+                updateControls();
+                return;
+            }
+
+            const nextBatch = filteredCatalog.slice(renderedCount, renderedCount + batchSize);
+            const fragment = document.createDocumentFragment();
+
+            nextBatch.forEach(game => {
+                const isFav = favoritesSet.has(game.id);
+                const card = document.createElement('div');
+                card.className = "octo-card bg-octo-card rounded-2xl overflow-hidden flex flex-col justify-between cursor-pointer group";
+                card.onclick = () => launchGame(game.url, game.title);
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Card Image Container -->
+                        <div class="relative w-full aspect-[16/10] bg-[#0d1117] overflow-hidden">
+                            <img 
+                                src="${game.cover}" 
+                                alt="${game.title}" 
+                                class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                loading="lazy"
+                                onerror="handleImageError(this, '${game.title.replace(/'/g, "\\'")}')"
+                            />
+
+                            <!-- Top Right Bookmark/Star -->
+                            <button 
+                                onclick="toggleFavorite('${game.id}', event)" 
+                                class="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-black/60 backdrop-blur-md text-slate-300 hover:text-octo-green transition"
+                                title="Bookmark Game"
+                            >
+                                <i id="fav-icon-${game.id}" data-lucide="bookmark" class="w-4 h-4 ${isFav ? 'fill-octo-green text-octo-green' : ''}"></i>
+                            </button>
+
+                            <!-- Hover Overlay with Play Button (Matching Reference) -->
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center">
+                                <div class="bg-octo-green text-black font-bold text-xs px-3.5 py-1.5 rounded-full flex items-center space-x-1.5 shadow-lg">
+                                    <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                                    <span>Play</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Label Area (Matching Reference) -->
+                        <div class="p-3.5">
+                            <h3 class="font-bold text-slate-100 text-sm line-clamp-1 group-hover:text-octo-green transition" title="${game.title}">
+                                ${game.title}
+                            </h3>
+                            <p class="text-xs text-octo-textMuted mt-0.5 font-medium">SNES • .${game.ext.toUpperCase()}</p>
+                        </div>
+                    </div>
+                `;
+
+                fragment.appendChild(card);
+            });
+
+            romGrid.appendChild(fragment);
+            renderedCount += nextBatch.length;
+
+            if (window.lucide) lucide.createIcons();
+            updateControls();
+        }
+
+        function setupIntersectionObserver() {
+            const sentinel = document.getElementById('load-sentinel');
+            const spinner = document.getElementById('scroll-spinner');
+
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting && renderedCount < filteredCatalog.length) {
+                    spinner.classList.remove('hidden');
+                    setTimeout(() => {
+                        loadNextBatch();
+                        spinner.classList.add('hidden');
+                    }, 150);
+                }
+            }, { rootMargin: '300px' });
+
+            observer.observe(sentinel);
+        }
+
+        function updateControls() {
+            const remaining = filteredCatalog.length - renderedCount;
+
+            if (filteredCatalog.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                loadMoreBtn.classList.add('hidden');
+                catalogEndText.classList.add('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                if (remaining > 0) {
+                    loadMoreBtn.classList.remove('hidden');
+                    loadMoreBtn.classList.add('flex');
+                    remainingCountSpan.innerText = remaining;
+                    catalogEndText.classList.add('hidden');
+                } else {
+                    loadMoreBtn.classList.add('hidden');
+                    catalogEndText.classList.remove('hidden');
+                }
+            }
+        }
+
+        // Launch Game in Playable WebAssembly Emulator Modal
+        function launchGame(romUrl, gameTitle) {
+            document.getElementById('modal-game-title').innerText = gameTitle;
+            
+            const iframeContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        body, html { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#000; }
+                        #emulator { width:100%; height:100%; }
+                    </style>
+                </head>
+                <body>
+                    <div id="emulator"></div>
+                    <script>
+                        EJS_player = '#emulator';
+                        EJS_core = 'snes';
+                        EJS_gameUrl = '${romUrl}';
+                        EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+                        EJS_startOnLoaded = true;
+                    <\/script>
+                    <script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script>
+                </body>
+                </html>
+            `;
+
+            const iframe = document.getElementById('emulator-iframe');
+            iframe.srcdoc = iframeContent;
+            document.getElementById('emulator-modal').classList.remove('hidden');
+        }
+
+        function closeEmulator() {
+            document.getElementById('emulator-iframe').srcdoc = '';
+            document.getElementById('emulator-modal').classList.add('hidden');
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('emulator-container');
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) container.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        // Live Search Listeners
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            clearSearchBtn.classList.toggle('hidden', searchQuery.length === 0);
+            applyFilters();
+        });
+
+        function clearSearch() {
+            searchQuery = '';
+            searchInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            applyFilters();
+        }
+
+        function resetView() {
+            clearSearch();
+            setActiveFilter('all', 'SNES Catalog', 'All Games');
+        }
+
+        function filterFavorites() {
+            setActiveFilter('favorites', 'My Collection', 'Favorites');
+        }
+
+        function setActiveFilter(filter, titleText, badgeText) {
+            activeFilter = filter;
+            sectionTitle.innerText = titleText;
+            activeFilterBadge.innerText = badgeText;
+
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.className = "cat-btn bg-octo-green text-black font-semibold text-xs px-3.5 py-1.5 rounded-lg transition";
+                } else {
+                    btn.className = "cat-btn bg-octo-card hover:bg-octo-border border border-octo-border text-slate-300 text-xs px-3.5 py-1.5 rounded-lg transition";
+                }
+            });
+
+            applyFilters();
+        }
+
+        document.querySelectorAll('.cat-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const filter = btn.getAttribute('data-filter');
+                setActiveFilter(filter, filter === 'all' ? 'SNES Catalog' : `Category: .${filter.toUpperCase()}`, filter.toUpperCase());
+            });
+        });
+
+        function openControlsModal() { document.getElementById('controls-modal').classList.remove('hidden'); }
+        function closeControlsModal() { document.getElementById('controls-modal').classList.add('hidden'); }
+    </script>
+</body>
+</html>
