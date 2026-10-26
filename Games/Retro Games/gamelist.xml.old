@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<gameList>
+	<game>
+		<path>./0001 Mortal Kombat.smc</path>
+		<name>0001 Mortal Kombat</name>
+		<playcount>4</playcount>
+		<lastplayed>20190411T193307</lastplayed>
+	</game>
+	<game>
+		<path>./0008 Super Street Fighter II.smc</path>
+		<name>0008 Super Street Fighter II</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T193458</lastplayed>
+	</game>
+	<game>
+		<path>./0010 Super King Kong 1.smc</path>
+		<name>0010 Super King Kong 1</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T193637</lastplayed>
+	</game>
+	<game>
+		<path>./0012 Super King Kong 3.sfc</path>
+		<name>0012 Super King Kong 3</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T183747</lastplayed>
+	</game>
+	<game>
+		<path>./0006 Rockman and Frudi.smc</path>
+		<name>0006 Rockman and Frudi</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T183948</lastplayed>
+	</game>
+	<game>
+		<path>./0014 Star of Kabi 3.smc</path>
+		<name>0014 Star of Kabi 3</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T184015</lastplayed>
+	</game>
+	<game>
+		<path>./0025 Time and Space Tour (Chinese version).sfc</path>
+		<name>0025 Time and Space Tour (Chinese version)</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T184033</lastplayed>
+	</game>
+	<game>
+		<path>./0039 Teenage Mutant Ninja Turtle.sfc</path>
+		<name>0039 Teenage Mutant Ninja Turtle</name>
+		<playcount>1</playcount>
+		<lastplayed>20190411T184048</lastplayed>
+	</game>
+	<game>
+		<path>./Featured Games/Alien Wars.sfc</path>
+		<name>Alien Wars</name>
+		<playcount>1</playcount>
+		<lastplayed>20240902T033939</lastplayed>
+	</game>
+</gameList>
