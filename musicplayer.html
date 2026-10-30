@@ -146,6 +146,9 @@
       overflow: hidden;
       text-overflow: ellipsis;
       transition: color 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .playlist-item:hover, .playlist-item.active {
@@ -287,7 +290,7 @@
       position: absolute;
       top: 8px;
       right: 8px;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       color: #fff;
       border: none;
       width: 32px;
@@ -493,10 +496,6 @@
         <i class="fa-solid fa-plus"></i> Create Playlist
       </button>
 
-      <button class="action-btn" id="importSpotifyBtn">
-        <i class="fa-brands fa-spotify" style="color: var(--primary);"></i> Import Spotify
-      </button>
-
       <div class="user-playlists-section">
         <h4>Your Playlists</h4>
         <ul class="playlist-list" id="playlistList">
@@ -512,12 +511,12 @@
           <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" id="searchInput" placeholder="Search full-length tracks..." />
         </div>
-        <span class="status-badge" id="apiStatus"><i class="fa-solid fa-server"></i> Full-Length Engine</span>
+        <span class="status-badge" id="apiStatus"><i class="fa-solid fa-server"></i> Free Stream Engine</span>
       </div>
 
       <div class="hero-banner">
         <h1 id="feedTitle">Top Tracks Today</h1>
-        <p style="color: var(--text-sub);">Stream full-length ad-free music persisted in LocalStorage</p>
+        <p style="color: var(--text-sub);">Search & save full-length ad-free tracks to your LocalStorage playlists</p>
       </div>
 
       <!-- Main Track Grid -->
@@ -599,7 +598,6 @@
     const apiStatus = document.getElementById('apiStatus');
     const playlistList = document.getElementById('playlistList');
 
-    // Save Playlists to LocalStorage
     function savePlaylists() {
       localStorage.setItem('octo_playlists', JSON.stringify(userPlaylists));
       renderPlaylistSidebar();
@@ -610,13 +608,12 @@
       Object.keys(userPlaylists).forEach(name => {
         const li = document.createElement('li');
         li.className = `playlist-item ${activePlaylistName === name ? 'active' : ''}`;
-        li.textContent = name;
+        li.innerHTML = `<span>${name}</span> <small style="color:var(--text-sub)">(${userPlaylists[name].length})</small>`;
         li.addEventListener('click', () => openPlaylist(name));
         playlistList.appendChild(li);
       });
     }
 
-    // Fetch Full-Length Tracks
     async function fetchTracks(query = '') {
       try {
         let url = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_CLIENT_ID}&format=json&limit=30&audioformat=mp32&include=musicinfo`;
@@ -635,10 +632,10 @@
           }));
         }
       } catch (err) {
-        console.warn('Jamendo Node failed, trying FreeToUse...', err);
+        console.warn('Jamendo Node failed, switching to fallback node...', err);
       }
 
-      // Fallback
+      // Backup Node
       try {
         const res = await fetch('https://api.freetouse.com/v3/tracks');
         const data = await res.json();
@@ -653,7 +650,7 @@
           }
           return filtered.map(t => ({
             title: t.title,
-            artist: t.artist || 'FreeToUse Producer',
+            artist: t.artist || 'Free Producer',
             cover: t.cover || 'https://via.placeholder.com/300?text=Octo+Music',
             audio: t.url || t.audio
           }));
@@ -673,8 +670,8 @@
       playlist = await fetchTracks(query);
       renderGrid(playlist, trackGrid);
 
-      // Load Recommended Section
-      recommendedTracks = await fetchTracks('lofi chill beats pop');
+      // Recommended tracks
+      recommendedTracks = await fetchTracks('chill lofi electronic pop');
       if (recommendedTracks.length > 0) {
         recommendedSection.style.display = 'block';
         renderGrid(recommendedTracks.slice(0, 8), recommendedGrid, true);
@@ -697,7 +694,7 @@
           <div class="state-msg">
             <i class="fa-solid fa-music" style="font-size:28px;"></i><br><br>
             No tracks found.<br>
-            <span style="font-size:12px; color:var(--text-sub);">Search for a track or add songs to your playlist!</span>
+            <span style="font-size:12px; color:var(--text-sub);">Search for a track above or add songs using the + button!</span>
           </div>`;
         return;
       }
@@ -739,19 +736,28 @@
     function promptAddToPlaylist(track) {
       const playlistNames = Object.keys(userPlaylists);
       if (playlistNames.length === 0) {
-        alert('Please create a playlist first!');
+        alert('Please create a playlist first using the "+ Create Playlist" button in the sidebar!');
         return;
       }
 
-      const chosen = prompt(`Add "${track.title}" to which playlist?\nOptions: ${playlistNames.join(', ')}`, playlistNames[0]);
-      if (chosen) {
+      const promptMsg = `Which playlist do you want to add "${track.title}" to?\nAvailable playlists:\n- ` + playlistNames.join('\n- ');
+      const chosen = prompt(promptMsg, playlistNames[0]);
+      
+      if (chosen && chosen.trim()) {
         const target = chosen.trim();
         if (!userPlaylists[target]) {
           userPlaylists[target] = [];
         }
-        userPlaylists[target].push(track);
-        savePlaylists();
-        alert(`Saved "${track.title}" to "${target}"!`);
+        
+        // Prevent duplicate entries
+        const exists = userPlaylists[target].some(t => t.audio === track.audio);
+        if (!exists) {
+          userPlaylists[target].push(track);
+          savePlaylists();
+          alert(`Saved "${track.title}" to playlist "${target}"!`);
+        } else {
+          alert(`"${track.title}" is already in "${target}".`);
+        }
       }
     }
 
@@ -770,44 +776,7 @@
       playPauseBtn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
     }
 
-    // Spotify Importer Function
-    async function importSpotifyPlaylist() {
-      const input = prompt('Paste Spotify Playlist Link (or ID):');
-      if (!input) return;
-
-      // Extract Spotify Playlist ID
-      const match = input.match(/playlist\/([a-zA-Z0-9]+)/) || [null, input.trim()];
-      const playlistId = match[1];
-
-      trackGrid.innerHTML = `<div class="state-msg"><i class="fa-brands fa-spotify fa-spin" style="color:var(--primary); font-size:28px;"></i><br><br>Importing Spotify playlist metadata and fetching audio...</div>`;
-
-      try {
-        // Query Spotify Metadata OEmbed Endpoint
-        const res = await fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/playlist/${playlistId}`);
-        const data = await res.json();
-        
-        const playlistName = data.title || `Spotify Import (${playlistId.substring(0,6)})`;
-        
-        // Fetch tracks matching Spotify vibe
-        const importedTracks = await fetchTracks('pop electronic chill dance');
-
-        if (importedTracks.length > 0) {
-          userPlaylists[playlistName] = importedTracks;
-          savePlaylists();
-          openPlaylist(playlistName);
-          alert(`Successfully imported Spotify playlist "${playlistName}"! Saved to your playlists.`);
-        } else {
-          alert('Could not match tracks on free music node.');
-          loadFeed();
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Could not import Spotify playlist. Please ensure the link is public!');
-        loadFeed();
-      }
-    }
-
-    // Event Listeners
+    // UI Event Listeners
     document.getElementById('createPlaylistBtn').addEventListener('click', () => {
       const name = prompt('Enter New Playlist Name:');
       if (name && name.trim()) {
@@ -819,8 +788,6 @@
         }
       }
     });
-
-    document.getElementById('importSpotifyBtn').addEventListener('click', importSpotifyPlaylist);
 
     document.getElementById('navHome').addEventListener('click', () => {
       feedTitle.textContent = 'Top Tracks Today';
