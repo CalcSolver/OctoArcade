@@ -287,12 +287,8 @@
   html[data-theme="halloween"] .logo .octo { display: none; }
   html[data-theme="halloween"] .logo .pumpkin { display: inline-block; }
   /* Halloween theme */
-  html[data-theme="halloween"] { --bg: #140a06; --panel: #21120a; --panel2: #2d180c; --line: #5c2e0e; --ink: #ffe6c2; --muted: #d79a5c; --danger: #da3633; --font: "Chakra Petch", "Segoe UI", system-ui, sans-serif; }
-  html[data-theme="halloween"] header { background: linear-gradient(#2b0f26, #150509); border-bottom-color: #ff7518; }
-  html[data-theme="halloween"] footer { background: #150509; border-top-color: #5c2e0e; }
-  html[data-theme="halloween"] .card:hover, html[data-theme="halloween"] .card:focus-within { box-shadow: 0 12px 28px rgba(0,0,0,.7), 0 0 0 1px #ff7518; }
-  html[data-theme="halloween"] .sign { border-color: #ff7518; }
-  html[data-theme="halloween"] .thumb { background: linear-gradient(135deg, #2d180c, #1a0d06); }
+  /* Halloween is otherwise the regular dark theme - just the pumpkin mascot and a purple accent, no orange wash */
+  html[data-theme="halloween"] .sign { border-color: var(--accent); }
   /* Debug panel */
   .dbg { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0 0 10px; }
   .dbg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -371,6 +367,8 @@
       <button class="btn primary" id="homeBtn">Home</button>
       <button class="btn" id="feedBtn" hidden>Game Feed</button>
       <button class="btn" id="smorBtn" hidden>Smor</button>
+      <button class="btn" id="moviesBtn" hidden>Movies</button>
+      <button class="btn" id="romsBtn" hidden>ROMS</button>
       <button class="btn" id="settingsBtn">Settings</button>
     </div>
   </div>
@@ -408,6 +406,22 @@
         <div class="set-row"><div><b>Reload game lists</b><small>Fetch the newest games now</small></div><button class="btn" id="refreshBtn">Reload</button></div>
         <div class="set-row"><div><b>Likes and recent</b><small>Clear what this browser remembers</small></div><button class="btn" id="clearData">Clear</button></div>
         <div class="set-row"><div><b>Debug mode</b><small>Adds a Debug button in the player: view a game's source, and rename or re-picture it (this browser only, never uploaded).</small></div><label class="switch"><input type="checkbox" id="optDebug"><span></span></label></div>
+      </div>
+      <div class="set-card">
+        <h3>Add a game source</h3>
+        <p class="hint" style="margin:0 0 10px">Point at any public GitHub repo of games and it shows up as its own collection, saved in this browser only (nothing is written to your repo).</p>
+        <div class="dbg-row">
+          <label>Collection name <input id="srcName" type="text" placeholder="e.g. Cool Games"></label>
+          <label>Owner <input id="srcOwner" type="text" placeholder="someuser"></label>
+          <label>Repo <input id="srcRepo" type="text" placeholder="their-repo"></label>
+        </div>
+        <div class="dbg-row">
+          <label>Branch <input id="srcBranch" type="text" placeholder="main"></label>
+          <label>Path (optional) <input id="srcPath" type="text" placeholder="e.g. games"></label>
+          <button class="btn primary" id="srcAdd">Scan & add</button>
+        </div>
+        <p id="srcStatus" class="hint" style="margin:0 0 10px"></p>
+        <div id="localSourceList"></div>
       </div>
     </div>
   </section>
@@ -469,7 +483,7 @@
   const state = {
     games: [], byKey: new Map(), view: "home", q: "", ai: [], ugs: [], sel: [], six: [], failed: {}, sub: "", page: 1, pk: "",
     votes: store.get("votes", {}), recent: store.get("recent", []),
-    set: Object.assign({ accent: "Green", size: "Medium", icons: true, hotkey: true, theme: "dark", keys: ["`"], debug: false }, store.get("settings2", {}))
+    set: Object.assign({ accent: "Green", size: "Medium", icons: true, hotkey: true, theme: "halloween", keys: ["`"], debug: false }, store.get("settings2", {}))
   };
 
   // RawGitHack URL for any path in the repo
@@ -506,6 +520,8 @@
       state.games = cached.games;
       $("feedBtn").hidden = !cached.hasFeed;
       $("smorBtn").hidden = !cached.hasSmor;
+      $("moviesBtn").hidden = !cached.hasMovies;
+      $("romsBtn").hidden = !cached.hasRoms;
       state.byKey = new Map(state.games.map(g => [g.key, g]));
       render();
       loadCollections();
@@ -531,6 +547,8 @@
       const has = n => root.some(i => i.type === "file" && i.name.toLowerCase() === n);
       $("feedBtn").hidden = !has("feed.html");
       $("smorBtn").hidden = !has("smor.html");
+      $("moviesBtn").hidden = !has("movies.html");
+      $("romsBtn").hidden = !has("roms.html");
 
       // Optional categories.json: { "Shooter": ["1942", "metalslugadvance"], ... }
       const override = new Map();
@@ -560,7 +578,7 @@
       state.byKey = new Map(state.games.map(g => [g.key, g]));
 
       if (!state.games.length) { statusEl.textContent = "No games found in the repo yet."; return; }
-      store.set("games1", { t: Date.now(), games: state.games, hasFeed: has("feed.html"), hasSmor: has("smor.html") });
+      store.set("games1", { t: Date.now(), games: state.games, hasFeed: has("feed.html"), hasSmor: has("smor.html"), hasMovies: has("movies.html"), hasRoms: has("roms.html") });
       render();
       tryPendingPlay();
       loadCollections();                                        // the big catalogs load in the background
@@ -729,28 +747,68 @@
   }
 
   /* ---------- sources.json: { "name": "...", "owner": "...", "repo": "...", "branch": "main", "path": "" } entries each become a collection ---------- */
+  // Reads one GitHub repo (owner/repo/branch/path) and returns a game list, used by sources.json entries,
+  // locally-added sources, and the Settings "scan" preview. Guesses folder-per-game vs flat .html files the
+  // same way the UGS/Selenite loaders do.
+  async function loadGenericRepo(o, r, b, path, label, keyPrefix) {
+    const base = String(path || "").replace(/^\/+|\/+$/g, "");
+    const api = `https://api.github.com/repos/${o}/${r}`;
+    const top = await getJSON(`${api}/contents${base ? "/" + base : ""}?ref=${b}`);
+    const dirs = top.filter(i => i.type === "dir"), files = top.filter(i => i.type === "file" && /\.html?$/i.test(i.name) && !/^(index|readme)\.html?$/i.test(i.name));
+    if (dirs.length && dirs.length >= files.length) {
+      return dirs.map(d => ({ key: `${keyPrefix}:${d.path}`, name: prettyName(d.name + ".x"), url: cdnCandidates(o, r, b, `${d.path}/index.html`)[0], cat: label }));
+    }
+    return files.map(f => ({ key: `${keyPrefix}:${f.path}`, name: prettyName(f.name), url: cdnCandidates(o, r, b, f.path)[0], cat: label }));
+  }
+
   async function loadExternalSources() {
-    let list;
+    let list = [];
     try {
       const r = await fetch(rawUrl("sources.json"));
-      if (!r.ok) return;
-      list = await r.json();
-    } catch (e) { return; }
-    if (!Array.isArray(list)) return;
-    await Promise.all(list.map(async (src, i) => {
+      if (r.ok) list = await r.json();
+    } catch (e) {}
+    if (!Array.isArray(list)) list = [];
+    list.forEach((src, i) => {
       const key = "ext" + i, label = src.name || src.repo;
-      COLLS[key] = { label, load: async () => {
-        const o = src.owner, r = src.repo, b = src.branch || "main", base = String(src.path || "").replace(/^\/+|\/+$/g, "");
-        const api = `https://api.github.com/repos/${o}/${r}`;
-        const top = await getJSON(`${api}/contents${base ? "/" + base : ""}?ref=${b}`);
-        const dirs = top.filter(i => i.type === "dir"), files = top.filter(i => i.type === "file" && /\.html?$/i.test(i.name) && !/^(index|readme)\.html?$/i.test(i.name));
-        // Folder-per-game (like Selenite) if most entries are folders; otherwise flat .html files (like the main repo)
-        if (dirs.length && dirs.length >= files.length) {
-          return dirs.map(d => ({ key: `${key}:${d.path}`, name: prettyName(d.name + ".x"), url: cdnCandidates(o, r, b, `${d.path}/index.html`)[0], cat: label }));
-        }
-        return files.map(f => ({ key: `${key}:${f.path}`, name: prettyName(f.name), url: cdnCandidates(o, r, b, f.path)[0], cat: label }));
-      } };
-    }));
+      COLLS[key] = { label, load: () => loadGenericRepo(src.owner, src.repo, src.branch || "main", src.path, label, key) };
+    });
+    // Sources added by hand in Settings (saved in this browser's localStorage, not in the repo)
+    getLocalSources().forEach((src, i) => {
+      const key = "loc" + i, label = src.name || src.repo;
+      COLLS[key] = { label, load: () => loadGenericRepo(src.owner, src.repo, src.branch || "main", src.path, label, key) };
+    });
+  }
+
+  /* ---------- "Add a game source" in Settings: a repo you paste in yourself, saved to this browser only ---------- */
+  const getLocalSources = () => store.get("localSources", []);
+  function setLocalSources(list) { store.set("localSources", list); }
+  function renderLocalSources() {
+    const box = $("localSourceList");
+    box.innerHTML = "";
+    getLocalSources().forEach((src, i) => {
+      const row = document.createElement("div");
+      row.className = "dbg-row";
+      row.innerHTML = `<span>${src.name || src.repo} (${src.owner}/${src.repo})</span><button class="btn">Remove</button>`;
+      row.querySelector("button").onclick = () => { const l = getLocalSources(); l.splice(i, 1); setLocalSources(l); renderLocalSources(); };
+      box.append(row);
+    });
+  }
+  async function addLocalSource() {
+    const owner = $("srcOwner").value.trim(), repo = $("srcRepo").value.trim(), branch = $("srcBranch").value.trim() || "main", path = $("srcPath").value.trim(), name = $("srcName").value.trim();
+    const status = $("srcStatus"), btn = $("srcAdd");
+    if (!owner || !repo) { status.textContent = "Owner and repo are both required."; return; }
+    btn.disabled = true; status.textContent = "Checking the repo\u2026";
+    try {
+      const games = await loadGenericRepo(owner, repo, branch, path, name || repo, "loc" + getLocalSources().length);
+      if (!games.length) { status.textContent = "Found the repo, but no games in it. Check the path."; return; }
+      setLocalSources([...getLocalSources(), { owner, repo, branch, path, name }]);
+      status.textContent = `Added \u2014 found ${games.length} game${games.length === 1 ? "" : "s"}. It'll appear as its own collection.`;
+      $("srcOwner").value = $("srcRepo").value = $("srcPath").value = $("srcName").value = "";
+      renderLocalSources();
+      if (state.games.length) loadGames(true);                 // picks the new source up right away
+    } catch (e) {
+      status.textContent = "Couldn't read that repo. Check the owner, repo name, branch and path.";
+    } finally { btn.disabled = false; }
   }
 
   /* ---------- The catalogs load in the background; the site updates as each one arrives ---------- */
@@ -841,7 +899,7 @@
   }
 
   /* ---------- Pages: every page has its own address (#feed, #links, #settings, #Shooter ...) so Back works ---------- */
-  const PAGES = { feed: ["Game Feed", "feed.html"], links: ["Links", "links.html"], smor: ["Smor", "smor.html"] };    // pages that show a file from the repo
+  const PAGES = { feed: ["Game Feed", "feed.html"], links: ["Links", "links.html"], smor: ["Smor", "smor.html"], movies: ["Movies", "movies.html"], roms: ["ROMS", "roms.html"] };    // pages that show a file from the repo
   function go(view, sub = "") {
     state.view = view; state.sub = sub; state.q = ""; $("search").value = "";
     try { history.pushState(null, "", "#" + encodeURIComponent(view)); } catch (e) {}
@@ -858,8 +916,18 @@
   } catch (e) {}
   function tryPendingPlay() { if (pendingPlay && state.byKey.has(pendingPlay)) { openGame(state.byKey.get(pendingPlay)); pendingPlay = null; } }
   document.querySelector(".logo").onclick = () => go("home");
-  function showRepoPage(view) {
+  async function showRepoPage(view) {
     const [title, file] = PAGES[view];
+    try {
+      const check = await fetch(rawUrl(file), { method: "HEAD" });
+      if (!check.ok) throw new Error("missing");
+    } catch (e) {
+      if (!grid.isConnected || state.view !== view) return;
+      grid.hidden = true; statusEl.hidden = false;
+      statusEl.textContent = `${file} isn't in the repo yet. Add it at the root of your repo (next to index.html) and this page will show it.`;
+      return;
+    }
+    if (state.view !== view) return;                           // the user navigated away while this was checking
     const f = document.createElement("iframe");
     f.className = "page-frame"; f.title = title;
     f.allow = "fullscreen; autoplay; gamepad";
@@ -1013,7 +1081,7 @@
     iconObserver.disconnect();
     grid.innerHTML = "";
     grid.hidden = false; statusEl.hidden = true;
-    const onPage = ["feed", "links", "smor", "settings", "bookmarklets"].includes(state.view) && !state.q;     // these have their own pages
+    const onPage = ["feed", "links", "smor", "movies", "roms", "settings", "bookmarklets"].includes(state.view) && !state.q;     // these have their own pages
     $("subtabs").hidden = !(["settings", "links", "bookmarklets", "six", "changelog"].includes(state.view) && !state.q);
     document.querySelectorAll("#subtabs button").forEach(b => b.classList.toggle("on", b.dataset.v === state.view));
     $("settings").hidden = !(onPage && state.view === "settings");
@@ -1223,6 +1291,8 @@
   };
   $("feedBtn").onclick = () => go("feed");
   $("smorBtn").onclick = () => go("smor");
+  $("moviesBtn").onclick = () => go("movies");
+  $("romsBtn").onclick = () => go("roms");
   $("homeBtn").onclick = () => go("home");
   $("themeSeg").onclick = e => { const t = e.target.dataset.t; if (t) { state.set.theme = t; applySettings(); } };
 
@@ -1273,7 +1343,7 @@
   function applySettings() {
     const theme = state.set.theme, light = theme === "light", halloween = theme === "halloween", root = document.documentElement;
     root.dataset.theme = theme;
-    root.style.setProperty("--accent", halloween ? "#ff7518" : light ? "#1a8cff" : ACCENTS[state.set.accent] || ACCENTS.Ember);
+    root.style.setProperty("--accent", halloween ? "#8e5fd6" : light ? "#1a8cff" : ACCENTS[state.set.accent] || ACCENTS.Ember);
     root.style.setProperty("--accent-ink", light || halloween || state.set.accent === "Green" ? "#ffffff" : "#12100e");
     root.style.setProperty("--min", SIZES[state.set.size] + "px");
     store.set("settings2", state.set);
@@ -1462,6 +1532,8 @@
     } catch (e) {}
   }
 
+  $("srcAdd").onclick = addLocalSource;
+  renderLocalSources();
   applySettings();
   loadGames();
 </script>
