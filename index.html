@@ -294,7 +294,7 @@
   .dbg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
   .dbg-row label { display: flex; flex-direction: column; gap: 4px; font-size: .75rem; color: var(--muted); flex: 1 1 180px; }
   .dbg-row input { padding: 7px 10px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); font: inherit; }
-  .dbg-row .btn[data-t].on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .dbg-row .btn[data-t].on, .dbg-row .btn[data-cdn].on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .dbg pre { max-height: 300px; overflow: auto; margin: 6px 0 0; padding: 10px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); font: .78rem/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; color: var(--muted); }
 </style>
 <!-- Google tag (gtag.js) -->
@@ -487,13 +487,25 @@
   };
 
   // RawGitHack URL for any path in the repo
+  // raw.githack rewrites GitHub's raw content so .html files actually render as pages (GitHub itself serves
+  // every raw file as text/plain, which is why an iframe pointed straight at raw.githubusercontent.com just
+  // shows the source code instead of running it). jsDelivr doesn't reliably fix that content-type for HTML,
+  // so it stays second: a real fallback for hard failures, but not trusted as primary for anything that needs
+  // to render, only for things that just need bytes (icons, JSON files).
   const CDN_BASES = [
+    { name: "raw.githack", url: (o, r, b, path) => `https://raw.githack.com/${o}/${r}/${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/") },
+    { name: "jsDelivr", url: (o, r, b, path) => `https://cdn.jsdelivr.net/gh/${o}/${r}@${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/") }
     // Add a Cloudflare-backed mirror (e.g. statically.io) and Gcore here once they're set up
-    { name: "jsDelivr", url: (o, r, b, path) => `https://cdn.jsdelivr.net/gh/${o}/${r}@${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/") },
-    { name: "raw.githack", url: (o, r, b, path) => `https://raw.githack.com/${o}/${r}/${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/") }
   ];
   const cdnCandidates = (o, r, b, path) => CDN_BASES.map(c => c.url(o, r, b, path));
-  const rawFrom = (o, r, b, path) => CDN_BASES[CDN_BASES.length - 1].url(o, r, b, path);   // raw.githack: used for collections that don't need multi-CDN fallback yet
+  // Debug mode can force a specific CDN instead of the automatic githack-then-jsDelivr order (for testing one)
+  function orderedCandidates(urls) {
+    const pref = store.get("cdnPref", "");
+    if (!pref) return urls;
+    const i = CDN_BASES.findIndex(c => c.name === pref);
+    return i < 0 ? urls : [urls[i], ...urls.filter((_, j) => j !== i)];
+  }
+  const rawFrom = (o, r, b, path) => CDN_BASES.find(c => c.name === "raw.githack").url(o, r, b, path);   // used by collections that don't need multi-CDN fallback yet
   const rawUrl = path => rawFrom(OWNER, REPO, BRANCH, path);
   const baseName = f => f.replace(/\.[^.]+$/, "");
   const prettyName = s => baseName(s).replace(/[-_]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, c => c.toUpperCase());
@@ -918,20 +930,23 @@
   document.querySelector(".logo").onclick = () => go("home");
   async function showRepoPage(view) {
     const [title, file] = PAGES[view];
-    try {
-      const check = await fetch(rawUrl(file), { method: "HEAD" });
-      if (!check.ok) throw new Error("missing");
-    } catch (e) {
-      if (!grid.isConnected || state.view !== view) return;
-      grid.hidden = true; statusEl.hidden = false;
-      statusEl.textContent = `${file} isn't in the repo yet. Add it at the root of your repo (next to index.html) and this page will show it.`;
-      return;
+    // Try each CDN with a real GET (HEAD isn't reliable on every CDN) - raw.githack in particular can lag
+    // behind a fresh commit, so jsDelivr is tried first by default.
+    const candidates = orderedCandidates(cdnCandidates(OWNER, REPO, BRANCH, file));
+    let url = null;
+    for (const u of candidates) {
+      try { const r = await fetch(u, { cache: "no-store" }); if (r.ok) { url = u; break; } } catch (e) {}
     }
     if (state.view !== view) return;                           // the user navigated away while this was checking
+    if (!url) {
+      grid.hidden = true; statusEl.hidden = false;
+      statusEl.textContent = `Couldn't find ${file} on any CDN yet. If you just added it, a CDN mirror can take a few minutes to catch up - try Reload in Settings shortly. If it's still missing, add it at the root of your repo, next to index.html.`;
+      return;
+    }
     const f = document.createElement("iframe");
     f.className = "page-frame"; f.title = title;
     f.allow = "fullscreen; autoplay; gamepad";
-    f.src = rawUrl(file);
+    f.src = url;
     grid.append(f);
   }
 
@@ -1200,9 +1215,19 @@
       <button class="btn" data-t="dark">Dark</button><button class="btn" data-t="light">Light</button><button class="btn" data-t="halloween">Halloween</button>
       <button class="btn" id="dbgSrc">View source</button>
     </div>
+    <div class="dbg-row">
+      <span>CDN:</span>
+      <button class="btn" data-cdn="">Auto</button><button class="btn" data-cdn="jsDelivr">jsDelivr</button><button class="btn" data-cdn="raw.githack">raw.githack</button>
+      <button class="btn" disabled title="Not set up yet">Cloudflare</button><button class="btn" disabled title="Not set up yet">Gcore</button>
+    </div>
     <pre id="dbgSrcBody" hidden></pre>`;
     panel.querySelector("#dbgName").value = ov.name || "";
     panel.querySelector("#dbgThumb").value = ov.thumb || "";
+    const cdnPref = store.get("cdnPref", "");
+    panel.querySelectorAll("[data-cdn]").forEach(b => {
+      b.classList.toggle("on", b.dataset.cdn === cdnPref);
+      b.onclick = () => { store.set("cdnPref", b.dataset.cdn); panel.querySelectorAll("[data-cdn]").forEach(x => x.classList.toggle("on", x === b)); };
+    });
     document.querySelectorAll(".dbg [data-t]").forEach(b => { b.classList.toggle("on", b.dataset.t === state.set.theme); b.onclick = () => { state.set.theme = b.dataset.t; applySettings(); }; });
     panel.querySelector("#dbgSave").onclick = () => {
       setOverride(g.key, { name: panel.querySelector("#dbgName").value.trim(), thumb: panel.querySelector("#dbgThumb").value.trim() });
@@ -1238,7 +1263,7 @@
       // Tries each backup CDN in turn if the game doesn't load within a few seconds (main-repo games only; other
       // collections have a single URL for now). This can't catch every failure (e.g. a 404 page that still "loads"),
       // only outright network/DNS failures - but it covers a dead mirror.
-      const list = (g.urls && g.urls.length ? g.urls.slice() : [g.url]);
+      const list = (g.urls && g.urls.length ? orderedCandidates(g.urls) : [g.url]);
       const attempt = () => {
         if (myToken !== playToken || !list.length) return;
         const src = list.shift();
