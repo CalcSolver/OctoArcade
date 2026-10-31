@@ -281,6 +281,25 @@
   .sk-line { height: 12px; border-radius: 4px; margin: 6px 0; background: linear-gradient(90deg, var(--panel2) 25%, var(--line) 50%, var(--panel2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
   .sk-line.short { width: 60%; }
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* Mascot swap */
+  .logo .pumpkin { display: none; }
+  html[data-theme="halloween"] .logo .octo { display: none; }
+  html[data-theme="halloween"] .logo .pumpkin { display: inline-block; }
+  /* Halloween theme */
+  html[data-theme="halloween"] { --bg: #140a06; --panel: #21120a; --panel2: #2d180c; --line: #5c2e0e; --ink: #ffe6c2; --muted: #d79a5c; --danger: #da3633; --font: "Chakra Petch", "Segoe UI", system-ui, sans-serif; }
+  html[data-theme="halloween"] header { background: linear-gradient(#2b0f26, #150509); border-bottom-color: #ff7518; }
+  html[data-theme="halloween"] footer { background: #150509; border-top-color: #5c2e0e; }
+  html[data-theme="halloween"] .card:hover, html[data-theme="halloween"] .card:focus-within { box-shadow: 0 12px 28px rgba(0,0,0,.7), 0 0 0 1px #ff7518; }
+  html[data-theme="halloween"] .sign { border-color: #ff7518; }
+  html[data-theme="halloween"] .thumb { background: linear-gradient(135deg, #2d180c, #1a0d06); }
+  /* Debug panel */
+  .dbg { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 0 0 10px; }
+  .dbg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .dbg-row label { display: flex; flex-direction: column; gap: 4px; font-size: .75rem; color: var(--muted); flex: 1 1 180px; }
+  .dbg-row input { padding: 7px 10px; border-radius: 4px; border: 1px solid var(--line); background: var(--panel2); color: var(--ink); font: inherit; }
+  .dbg-row .btn[data-t].on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .dbg pre { max-height: 300px; overflow: auto; margin: 6px 0 0; padding: 10px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); font: .78rem/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; word-break: break-all; color: var(--muted); }
 </style>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-8VPM98CGGV"></script>
@@ -331,11 +350,18 @@
 <header>
   <div class="bar">
     <div class="logo">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
+      <svg class="octo" viewBox="0 0 100 100" aria-hidden="true">
         <path d="M18 52c0-20 14-34 32-34s32 14 32 34c0 8-3 12-6 14 2 6 8 8 8 14-8 2-14-2-16-8-1 6-4 12-12 12-6 0-8-5-9-9-2 4-4 9-10 9-8 0-11-6-12-12-2 6-8 10-16 8 0-6 6-8 8-14-3-2-6-6-6-14z" fill="#ff5fa2"/>
         <circle cx="38" cy="48" r="9" fill="#fff"/><circle cx="62" cy="48" r="9" fill="#fff"/>
         <circle cx="40" cy="50" r="4.5" fill="#24184f"/><circle cx="64" cy="50" r="4.5" fill="#24184f"/>
         <path d="M40 64q10 9 20 0" stroke="#24184f" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </svg>
+      <svg class="pumpkin" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M50 20c-3-7-13-10-13-10s3 8 1 14C24 26 12 39 12 55c0 19 17 31 38 31s38-12 38-31c0-16-12-29-26-31-2-6 1-14 1-14s-10 3-13 10z" fill="#ff7518"/>
+        <path d="M50 25c-17 0-30 14-30 31 0 16 13 27 30 27s30-11 30-27c0-17-13-31-30-31z" fill="#ff9a3d"/>
+        <path d="M36 52l9 9-9 9M64 52l-9 9 9 9" stroke="#2b0f05" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M38 76c4 5 20 5 24 0" stroke="#2b0f05" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path d="M48 10q2-6 2-10" stroke="#2f6b1f" stroke-width="4" fill="none" stroke-linecap="round"/>
       </svg>
       <div>Octo <span>Arcade</span></div>
     </div>
@@ -344,7 +370,7 @@
       <span class="badge" id="totalBadge" hidden></span>
       <button class="btn primary" id="homeBtn">Home</button>
       <button class="btn" id="feedBtn" hidden>Game Feed</button>
-      <button class="btn" id="RomsBtn" hidden>Roms</button>
+      <button class="btn" id="smorBtn" hidden>Smor</button>
       <button class="btn" id="settingsBtn">Settings</button>
     </div>
   </div>
@@ -366,7 +392,7 @@
     <div class="set-grid">
       <div class="set-card">
         <h3>Appearance</h3>
-        <div class="set-row"><div><b>Theme</b><small>Dark or light</small></div><div class="seg" id="themeSeg"><button data-t="dark">Dark</button><button data-t="light">Light</button></div></div>
+        <div class="set-row"><div><b>Theme</b><small>Dark, light, or Halloween</small></div><div class="seg" id="themeSeg"><button data-t="dark">Dark</button><button data-t="light">Light</button><button data-t="halloween">Halloween</button></div></div>
         <div class="set-row"><div><b>Accent color</b><small>Dark theme only</small></div><div class="swatches" id="swatches"></div></div>
         <div class="set-row"><div><b>Tile size</b><small>How big the game tiles are</small></div><div class="seg" id="sizeSeg"></div></div>
         <div class="set-row"><div><b>Game pictures</b><small>Turn off to load faster</small></div><label class="switch"><input type="checkbox" id="optIcons"><span></span></label></div>
@@ -381,6 +407,7 @@
         <h3>Games</h3>
         <div class="set-row"><div><b>Reload game lists</b><small>Fetch the newest games now</small></div><button class="btn" id="refreshBtn">Reload</button></div>
         <div class="set-row"><div><b>Likes and recent</b><small>Clear what this browser remembers</small></div><button class="btn" id="clearData">Clear</button></div>
+        <div class="set-row"><div><b>Debug mode</b><small>Adds a Debug button in the player: view a game's source, and rename or re-picture it (this browser only, never uploaded).</small></div><label class="switch"><input type="checkbox" id="optDebug"><span></span></label></div>
       </div>
     </div>
   </section>
@@ -395,9 +422,11 @@
     <div id="modalVotes" class="mvotes"></div>
     <button class="btn" id="copyLinkBtn">Copy link</button>
     <button class="btn" id="reportBtn">Report broken</button>
+    <button class="btn" id="debugBtn" hidden>Debug</button>
     <button class="btn" id="fsBtn">Fullscreen</button>
     <button class="btn primary" id="closeBtn">Close</button>
   </div>
+  <div id="debugPanel" class="dbg" hidden></div>
   <iframe id="frame" title="Game" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
   <div id="below"></div>
 </div>
@@ -440,11 +469,17 @@
   const state = {
     games: [], byKey: new Map(), view: "home", q: "", ai: [], ugs: [], sel: [], six: [], failed: {}, sub: "", page: 1, pk: "",
     votes: store.get("votes", {}), recent: store.get("recent", []),
-    set: Object.assign({ accent: "Green", size: "Medium", icons: true, hotkey: true, theme: "dark", keys: ["`"] }, store.get("settings2", {}))
+    set: Object.assign({ accent: "Green", size: "Medium", icons: true, hotkey: true, theme: "dark", keys: ["`"], debug: false }, store.get("settings2", {}))
   };
 
   // RawGitHack URL for any path in the repo
-  const rawFrom = (o, r, b, path) => `https://raw.githack.com/${o}/${r}/${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/");
+  const CDN_BASES = [
+    // Add a Cloudflare-backed mirror (e.g. statically.io) and Gcore here once they're set up
+    { name: "jsDelivr", url: (o, r, b, path) => `https://cdn.jsdelivr.net/gh/${o}/${r}@${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/") },
+    { name: "raw.githack", url: (o, r, b, path) => `https://raw.githack.com/${o}/${r}/${b}/` + path.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/") }
+  ];
+  const cdnCandidates = (o, r, b, path) => CDN_BASES.map(c => c.url(o, r, b, path));
+  const rawFrom = (o, r, b, path) => CDN_BASES[CDN_BASES.length - 1].url(o, r, b, path);   // raw.githack: used for collections that don't need multi-CDN fallback yet
   const rawUrl = path => rawFrom(OWNER, REPO, BRANCH, path);
   const baseName = f => f.replace(/\.[^.]+$/, "");
   const prettyName = s => baseName(s).replace(/[-_]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, c => c.toUpperCase());
@@ -470,7 +505,7 @@
     if (cached && Date.now() - cached.t < 1800e3) {
       state.games = cached.games;
       $("feedBtn").hidden = !cached.hasFeed;
-      $("RomsBtn").hidden = !cached.hasRoms;
+      $("smorBtn").hidden = !cached.hasSmor;
       state.byKey = new Map(state.games.map(g => [g.key, g]));
       render();
       loadCollections();
@@ -495,7 +530,7 @@
       // Optional repo file: feed.html (Game Feed button)
       const has = n => root.some(i => i.type === "file" && i.name.toLowerCase() === n);
       $("feedBtn").hidden = !has("feed.html");
-      $("RomsBtn").hidden = !has("Roms.html");
+      $("smorBtn").hidden = !has("smor.html");
 
       // Optional categories.json: { "Shooter": ["1942", "metalslugadvance"], ... }
       const override = new Map();
@@ -515,7 +550,8 @@
       state.games = games.filter(i => i.type === "file" && /\.html?$/i.test(i.name) && !SKIP.test(i.name))
         .map(f => {
           const id = baseName(f.name).toLowerCase(), path = (gdir ? GAMES_DIR + "/" : "") + f.name;
-          return { key: f.name, name: prettyName(f.name), url: rawUrl(path), iconPath: iconPaths[id] || null,
+          const urls = cdnCandidates(OWNER, REPO, BRANCH, path);
+          return { key: f.name, name: prettyName(f.name), url: urls[0], urls, iconPath: iconPaths[id] || null,
                    cat: override.get(id) || (CATS.find(c => c[1].test(id)) || [])[0] || "More Games", desc: texts.get(id) };
         })
         .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
@@ -524,7 +560,7 @@
       state.byKey = new Map(state.games.map(g => [g.key, g]));
 
       if (!state.games.length) { statusEl.textContent = "No games found in the repo yet."; return; }
-      store.set("games1", { t: Date.now(), games: state.games, hasFeed: has("feed.html"), hasRoms: has("Roms.html") });
+      store.set("games1", { t: Date.now(), games: state.games, hasFeed: has("feed.html"), hasSmor: has("smor.html") });
       render();
       tryPendingPlay();
       loadCollections();                                        // the big catalogs load in the background
@@ -541,12 +577,14 @@
      Real image files with image extensions (png, jpg...) are used directly. */
   const iconCache = new Map();
   function resolveIcon(g) {
+    const ov = store.get("overrides", {})[g.key];
+    if (ov && ov.thumb) return Promise.resolve({ img: ov.thumb });             // a debug-mode override wins over everything
     if (g.iconUrl) return Promise.resolve({ img: g.iconUrl });   // Flash Games thumbnails
     if (!g.iconPath) return Promise.resolve(null);
     if (!iconCache.has(g.key)) {
-      const url = rawUrl(g.iconPath);
-      iconCache.set(g.key, IMG_EXT.test(g.iconPath) ? Promise.resolve({ img: url })
-        : fetch(url).then(r => { if (!r.ok) throw 0; return r.text(); }).then(t => parseIcon(t, url)).catch(() => ({ img: url })));
+      const url = rawUrl(g.iconPath), candidates = cdnCandidates(OWNER, REPO, BRANCH, g.iconPath);
+      iconCache.set(g.key, IMG_EXT.test(g.iconPath) ? Promise.resolve({ img: candidates })
+        : fetch(url).then(r => { if (!r.ok) throw 0; return r.text(); }).then(t => parseIcon(t, url)).catch(() => ({ img: candidates })));
     }
     return iconCache.get(g.key);
   }
@@ -565,12 +603,18 @@
   // Load icons only for cards that scroll into view (there are 200+ games)
   const FALLBACK_IMG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAMAAABrrFhUAAAASFBMVEVFR0ZFRkZERkZERkVERkRDRkRDRURCRUNDRENCRERCRENCREJBREM/QUA4OjkwMTAlJiYaGxoQEBAICAgCAgIBAAAAAAEAAAAY5taFAAAmj0lEQVR42u1dh5bauBoWaBHEjroc3v9N718kWW4MmJLZvcOes0mmgPXp71Vc/89f4geAHwB+APgB4AeAHwB+APgB4AeAHwB+APgB4AeA97+GFGOAl+cX/jXGNPwfAJBi8M5ZY7TuOwUvKeVJqa7T2hhrHYAR038UADy6NbqTAg6t8NDt60xgCCF7bQCHT6Mg3n54OHsPR8/n5quH8+aXJEzO/D34ugIUfEj/DQASHF4rOHs5nVAd0bt19QX/QK7okAQIIwBIdB8E4W0ARO9Mx4dX8iA7ou9ViUdy0ROXKJQL9BuiN+4jGIg3nd5qIGc+ykXj0e/gbZKTptCMFL8+gYF4C+UbiWc4w+GRmGN75ynrwZCV4JwmUiTGORB6wAwu/MsAiN4ovHugZrj5ENf1YKdY+nVdz1pwSiOZf4gOeuvTvweA4DQ+9xlP7+vNZz14QUkHpxbEHKgVWToK0oLdVAsiHfXiRO9lXPxXAJC87ejyBZ6+1YMd60HWB0AYBv8COgDPr73THQMCMLRacAAMVH7Dt3GCeOHxjSKiVZVvU/CjHsSjBic7aa9Xd4B/hmvAr5rh6gR+H5hj1IKZeoAONKgQgKC34VsDAMeX+KCHyrJMw3irGYGzjteg4MTp6hApBgDxiEARSsfkJRuHgBnQUBiqUEGuEt1bIHgNAIO3fPxCqki9F+BgYF+PZMAnoyMrE69e8L8AGOngx+HfiAt9mRAACYjSL2YobX/EH30HFbwEgGAVkWkRVnBpJAzgevkLwRBzwJH1Ga766mUFQCAACcgHOSNTgHABxQNL0ipc8Yf1y8XhCwCIrqfbN/ywQ7Ca5TucH6g4oCpEIu+kv0atup5PDgAgDvhF+JsSAIDNvwbEgD9IyrIIFIBAnlEcvlgpiueZXwuW07Fogiz0kK2vyfbK+Cuzu4OrVoX5MwD4LzsMVuRv4q/BkRmAjlVKgYCAliZ8JwCClQ1pAu3LrOU7pm4U8BLuHG8X/j0ALxyQEM4ZAGIIASBk8oATXvw1k0z2EUH88bUzq8nulXwgXkD9UvEdwfGB9o0rlwcn5UtFVgABJ5nKReUEBAB1gsD/AQh9hm0IQ6YGUIugHUGNWE86AQBGvM3r+OA5AEKHj8k0CYpQsJILGQHQ9HSpUrDcIzknMgB89flreP2gI5EjhAVtYFEsZtshDdH9UgVk4Dh8Rx2/CQvAec6ar9+w9wcAFAQkUwBafmwBoCHQIxqhy7RPbAJcZCIrQxCAEd7KXgcWiD3zu1dEZ5FBz6rjWwCAByRNDk8siuArCLAMUPB/sPCzxL8GH0jfjQDgexwco6nwxL4rGgHpI1j4HtKDJJTwd1FNfBshqIjUr0Vu0y1nBJAagDAuJLNQGiqdL7Snv0cEwCf8RcINzowQof8wXAnPDCF7C/y9rEG/jxqEB80XQhY9nsTBkzKr4uVbQ9wbLX2XDEPgaHCGwS0GDwm84aIxwBpyA4jSWN+NKEDLHiWftIk4Tb6SAV4AAN4fP1HWXOHqkCR8j84+XhqK7xj/AFEodPgOGP6lyKCFP4zuFTnEvfMaiTwZ9CWLg9Qh0/RqFAfIJjp+JwBYmdPD+UO2bwSKKw8aQvVE/qAgNFwvOvw5LpgGeiWOD3lnMYQmMAAEfKBILQqMBNA7O9YOxAC6sML3ASAh66LNy6oLvVzW0oQAhoXANKY4782wIAdNOFjCjtEZfpW1AphNfO0DfVb6XgAQiY4CKv/NkTRHS1bI1SA33v6wggKCILUHAQkSJGqZjQnmspHavpU3iHxpygWB+TdgZMhEtN0PGBdMbVwQA+Au8z+nCCgpNrSpFHMW2jAdaBCLFESIE3nzdwCIbp2KUfrxc4ExS3YeWjRaow0fhjbaa7QmQSibF/zrwkmDGkPMcWUFxJQyj/mM9D9mRQIOmFf4BACa5NgSBV91sxPFq5MCHNlhDI0ZjbI+J8HmL5WzYq4GUhM61eT6xmr5hAv8pF+e3RmNuH+ABcBmVflBJ0w9VGMALh85V8lLDYsiSWsp5znRNRikkA3LRGcEMEmWrCxjhR3aw4Pc1B3F1/vwCQCyblYnylyNYW9izkKl1ml04YdZiujOF8VECwboXwmVAyvFfr62uNaA627j+CEAyAzNdJwTH6kxBiJbajWAi4HBh06fswWEQSyRdsXGAFnXxQSIrCxy7g3+OLiPaAFy41GUSUp95RRmMQH4nnz2W/EhO4Em74LbZSsEwTJsJYOyGEuGLwMRJY63GhKwowlAVMWHPx7AwMAsw37j6DE1iGZaAIHuma1L6ipyZIAEVAqFgeEH4CpL2oNZHOU9ab764myZPOQjYRSN8iEn8JHZoEokTZDGgNFROBb02bq6Dkad91vHjwGQHXgWQJbTNh3fFnDoqaqoiEFc4BEiDyvL424kiYcxLXxiMydRik1KMyaYMHXgAFYl1Yz/QPee9vvHjwEAnyXN0MqhCydCFQXCMjh8fJWfHhzig+K7up1boLSwLNkADC8SBKnKX211Tbv6uHIr7wcANPzUF6upcKn67LFhmBjVYMj82ncPpPmBuXRhfxKACEEOA3UUbpZicvprE0b4hCk8flgspgDKpEMW9SClMDJYAniY2Hu4yIHI32Qv0ip6s5QzBiRUin3hQ2GOZxzkBwEAUZQ1TtRjEQtJPIbAwDVJOv4QrOrtrhIPwDSnwYCcMOhuxxTBiHo2/sA+lPZjzhD44zn+88eyvg7Xmg8hGqBALh1fPpPHwkQQQcAilOyPMfPGmiAU6fCMg/QgACAEztnq5Khl5cg/wfaCLCTP+RLjnwvcRIIg5PxA1QgDQkOaINM9Pkf4GAA5rt/YxV2TvqMsMAAQ7OEVqQuEIAfYizaIuQZjtH4xxWDi5wDwMgenrr6aeKra/gETg9r2r8pgxpIOzMcfZU1XGB/M82dEwKMARKsK9KEtd8XcVUnf5Tj4a17ASyURllPkXZN5LAaC/xQAERkOY9dkFE18+0ql/rVVDINnOIPVU78qAxAoqxA+A0DEbIXMH2zmbt5otr3+hRJ24Vbmi3gOgUcASHh+wR/rtVxxZf95TyUT2tYroSTpUkFA6g8ERBLf/1BC3qve/OX1EJBtvfppIqdLn0FAPHD+Yzl/ctsBrsOry3i8OW5+WEbAP4HA3QAkFLeCkxJeCbkd1BLmhambSEUh2/GzjACmJvaVzoi7zy/r+ckH7LZjXSWT/woVoOX26dECy3FJf9mLwJ0ADJTdbpJS7Advkqb2r5H9Um3S2dQrRqdJ7rEI7wSA8pN6at2jWXrYeEB1egERbF//on46sYWyAwFx3/3nJ9HTLN+wsE4aIviKIP8MXxpdaovFpo4WhSjzh8a3AOB/yRyzlHIW34luC4JT59bMotw2QMlBu2gUaMjfiG5T06bmDjjz8Cu3JT2cOr4LgEkry0moCQabECg5ZwNODyrZJAdzo8A8fTz433JLwIah5UKd0wNC9ovulJeqQY5ZKhJ84O+0PIhu65dsMExK5+e5Ai6R/5L8T7I5fqLTnzlKOs/WvcsZohL4EgkZnyVsaGtRrBMKHEp1MyeGsd5UbM61H1VtlKFGyAWGnOOHwuLX0gZAn3xpunmCWSoEDA5WR1Z2Y+vk/JVL5FUV7hwHWKA5Uh2+4ynH48NT+mZPgQS1snAsfLyStOCDoy4hgt90oZrKwXq9fP3Gr5Mgr0XXCxMgh1qz8qErwPIL/6y23Vkhkjj8BZzgNsyWIgIrd0jPDSJx8SKH1uTQd4EgTa0Aqf2YkCEFoZTxLzA495fIBKdmpkf7zPmBo+tkDWBQWaldjbRieMOMBfJEOtxlsaZQsCpJvSjs9kSNkFtWLAUrLrnnIbApP0ozaSitsgIA5v2OPvatPxVapxPQ/DOPTFIJ4V8FwKuVkr3kurFVhpRZBUDpmKvDw+SVCAD6Zv3RTvZkRTFJiUWMAUtSXlQvuRsAqtiyaxacVBw1oKfXeiQBvGQAYDANcyMNAQBIHof6RVNtCHw3tWJRxlqP8LcA4LKguGrDU8sH0+/JBz02kAxw0hkA5wyASzXGCG9Lng15lMGsO5ZYj/CSklHxBANsJGRiKPFTCt5zDTUJTHCqtwAI1ETJeiDkwnO6+hg2MzQvYYKdACAJHt0o/lcYIV8nnQY0llGqj/64DoAEEXAAtMirtzXpdFj61KnI/rE48a8AAI841oOA6Tp70FD1IV07AIC/cfBRi1UA4KtA9Rcig98h6FnMb6Jn6t9e0zggdkvAkQNjsNa3Wjno02jBeFL/QAh0w1sAgKiQhBJjUUOsEzETnW868lEKPV84LfYSQPPZzjrtGgDw/kvY+AwmHvdLWfrihgxQ6oJagnqpQlGdZ6mmNID1I8765haU/ysAUFZsQn3OT+lfOZe7vkj4S7DbrMpScQ0A/OsFf0c6QKrvc8eYnSFw9W52DU93D+0CwMq5CRDcRD7izaAaUCY4gXfalXbSGwB0EtsIo5fK+44LDexpDEVzbC7OLMinVaHYRQBg4MzET5p6Kl3PdT06wL/d2AZ6EwA2IbEu0p0oB8lU1Mr66X37F5DAHgBQ+rgbBlK28JAU4EZDz37wXQCAVwx2EJaFw7FLBcI/flMZP08COwAI3Pe6YSCN+o/cXPQBWy/5KwA6dSSCOdhUheF27vcFJLADACDMQ5UAPizFYy2ZQ7e1N9Og5lcAYOBEFfhGMGcH9yMJqPBhAMhODaNhkhpjNTYuPE4E8Nji8CgAHfVRRtO0GExMvhBj1QxsOHwWAN/4YUPwGNOeGOj82KgHhaszIR4CADSiT1YUzQkmAhiJjSawZqyW5IkUnwQgtZWpyTnfkCeQvLKezgc6zEnllmUk9wFg4fyBGqiBkDxaibF1NLxzw6iR3UcBAB04LUsbbRPuIIwc1Aef2PfzQDjWva4B0M1/UML5E0YIVOeuYdoslmxrdaknxeDDACwKM1OYaAAMhmFYCJzZBW9LuLpVAPwiuwRAUkEKfJvakBtCT01qiOKJT4nBRwFI5rQZBzDkAsnekzesOn2Z58xpNsIUgB4BCCuZADw22MEpx5q3CP3JStmHAQjdJsnVMUigAOn61DT/RWast2ONadFwkaNf9nCe6QLlhmBypGyrL4xYMn0OgBbwGOdm2RjUHVw/Jekc2fKWO6ArWfhrBqAEVJtwIYiRkTXm6i67xditdPlcrTD1R4dqA8Q0ZiTHMVAGWx6jVpM0aQYLAWhIgC4vlhzqLBdiI6hSrbulPRjDUG2Bz1aLw+U1BOeMre5ZqpzdB0wPmJaej9VyIQBGcCSPzAnzSFr2C0TnopdLayhaWyuxiCmHTwHgG7Ubsb6h1UcdFw1dbPwzv8uRTuy1IYHSbhquqwigRuGK1LOU0xgozl+IVQ98rmOktYKADhuVbCnoQRBgp4SdOEBN5p8OW0jgwN2mNk08raYUNOYpZT3OHmwcP+dAG8bqm3ysZyjNW/SqH5DL9vNYNam7qaBvpGhDApkAJtVEkxpUrfndHI1hazIhbUrcy891jYXf5w0l6GlIjIvcMtAeYubMtiSgMgEMM2dzogsFv2vfbeUBxjae9wOwDbaVXRl9GexUAcx+gc9LM8ZWCIAN6hY+Ov4vWXTmKlmqT3WOYhjSb/rIXRl92drAi8upJHApBPBnGXBpxMeQR3XSv/5sgK/CZwDYbFAa+2c62VnfksDi5zMJaDdXAStMIK1vClI3LnrsY3o3AC2xkQ80NM/Q1nG2FsCKzxBIH/Kfzm6SE9vVp/ad/SQ8WpqH5RNtQw+N0LCX7lRsjmh9rEowmc2y4RWC8fgeYELgr8e1eJ/ferdGnngwkWztnu76vUX6DwBAAe/RIg96LFKhAYlr9V/gFfD87CkheTq4B16YEkDMLfUXufIaO8XYc9CmhoVOu6pkHwQgmSNNc6yOgLO1coEmAdKErI2XnhR5AAkgFQQdJwSQPE/YWn+ZqSJMOJs/T6qgrlVh31woSc7OWCMbAjxDaK0AE2+8XAsBkAAa0QPFR9rj36p7Iskw+sQYiAp1gLNVe0ds3d8xYuQyHTI0MvALr3wCgdd0885UAvjq+BmA8ZDDQnPsK5m5G4BbgQeOXiITxrB8pSUEyfBgoCJR2uNHt0L/Zc7sps2bh3S+EQB3oyCD6nsIgBX5fRlvdoSA3cjEPu0wOb4WS/knvgSArCH/RgDwZLfg3waAGyoj71LwBsRIjCGbvw7rRsGHxK9RzehG6b2sANgbRuqu0sE7AeD2zM0kJWrBTQAIAqtBSeBKIU3/y8wUUHHkr+Cf/UZBeQVgm899r3ZVTd0JABXFhRvy4SYA2OahAb9GK2Th0eoJtd2MWAG4IWlDne/6BgDirYRwbiS/CUB27IYbVuatZoJ7AMCY1I5xOvcBEH7dtLaDugeAlR6a5voO3bMADLtiY+JeEXgr6HInAJv9hIPrb48cuwuAfcM07qSA0ysAUNKAE7xS+GtN8OZWQ83fB0B/xX1fA6BoEkQwy9pH+hKPJn8GgH220H0ArNrBDwnBcQGBa3o/yAjUdUae2WpEvQcA7G7fERa4Uw3SZPBNERb1FwCoseEp+cvEa3HNuKG4RQWjHbAJQLBl8uRbAMjDI3ZZgrR7JTZGv566xsGOTYjRrVJBYwjdsgSFG94FwO3i7Dj6AmuG/PT4yU8SWdHEASBo/YVlXOU+U3hX1/793uCNeT1UNEAAhJVgyPT4xREaZbebukNbHuVtZ2iAR+jfOD+AP3+zXq+6w9dh+cpPWM5Y8wCpiRBOIdjms83or+92TlW8PyJ0yx34MiAyhHq+zAGDy/ndAggRSEybLxY0YdtZ25cfux8AdgjXh8TQXHltbwT0RjnHHADGTzGKKksgBDde28kxb3e6go9FhT3m/NZh5v0wK5FcMH74FaeJoaAtRgU4QzAKxZRZXsv1DuN1KkuG6nH25UYeyQvQrBa7GRJaNQAWT+zhK2gMYTiI/gRI4ppluT42Z0s6nPZOLXlssLI+b3D6NKEpV3M5lQPQ9keNydPj01wtlA0zubZqMqRovYUO8zUfGa2Ny142uFA0Qw5MQw9zzgS17zXZ/kYiOOQIzcI8DQEoM3GS1hXdU2NlH0yObmWHwyQAGPq2ymP6sNodyq4EsmuBDZyOC6uiZtZSkx3dIL/NnPXrAdjEOicHaaAAPHJLttNbs4LNefoFemwQYVPtPkm08vtlCNY/e7A7baAdAIRNa5wKHi7WD+2NLStkosnqn3iGb9T3tuWBSZUQxRDi4HkIwboVQNU5H6oQ2Xa5QRDhMGGw5A9qmiCfTH4PgavLM5lnEvDt/JQ20UxrLHONjNrigOeGaj4GwGC3yjKBpA8uT9TB+ZrdelZ/GBoCKNQBmnG0BCb6xLlL3uSJeyY2JJ374Gjt683H0DrvW/MzOm5slJDrgtRYKVsSRGwgHxvy70uZoMKC0Y1q4eG5ubqPVopukhv1cfKGgISDMyaM3PspAP5Q5TqSgBkbMMTUnnCxjBbZTIpE/VS19KNTZbcrssqzK+1wwdq02u3iWwCaIiqipwJAnNpTznViXN+4peq8/ORobbQENlzSvBKM2z08Dxhoi+XTCEA7LQPhzABM62RpQjOPilovN/vKNnkPADfwrjMwsM3BLZqF2FgNJk17hGjNHO1kW0zPo76DQ3ebAHbnxXcCcOPzMgngZdMouFmgX1IdEwIw8XUQTlpLO5uchBqQ+g7O6iYB0I38+RwAt9YZ8IpAanOg+cszKjjj1gAC4LIAYDGPDQQANtuXN9sugHluvcIOAPx2LQoPywg8PkU5CiDMcyN2DQBr5mUBCg6Fb4PkRHnTrVEJqAOeahx8GABk4C3L2x1wCgK3T3sM05mV9NAaAPNswFnTG/Q8QwKXrfXbwbinZqvv6BxdGl5DYw4qQxSLU5Muwi1bItUqAHL+Q9EJmX9b6klEflhEYp5rHn4cgNDPulVTM+WurxEMg+Eb33d7AMDrBzoyNSbSOFQuzBnyufbxxwGglU/1QmKcjLUYLVkluHv8Ih8FQBHFt0MVWwYINqU6N3PgRdafBYAXZo9NUFY3E0ZHX6bOD5hSwdcA9B5ESZ6/sAyqYDzJVoEYuqenKe0AgNbeFdiH6Kxr54uWneF8AqBPr9oY4VcASKk85aKbAQKtBvDOmTo/c7DP7+DdM0KDGK+mM2cJOTaHmIYxHIQbCJ26FwBQ/zh0Rdf5CyvjE8aJNS8ggF0AYDRDjL1jc3hUlWI0FEfQIKFCBbcAkCfQogOOleJB5ixDFwM06ifivJKnp2ntGqMzkQJrMQPUY6wNLY+Sws0rXwJgydWEN7es/0gP3tglGdQL5qntAiAt91/HJupDw8P6MizXDmQ50EAtuQUAxdACfEPgIKVsQeL4kSaUUIvDm6eQT49T2zdKy5/mlNnqQkKgcnXgIkPkV2s3AAATmaocceRUHH0lNU14BTunw+75JcT7ACDxa5u9e2Ey23hw1Qvg4Xg8SqyLQW4A4COZV7zFqJGJzf3jzDY/1p7nziLjh78BAM91rQ+HxoBttcFQd3DA1fdnEJkcuHJiAwCHBQ4HHj8ZatPUdG0GDk8Zm1TQ8SCryYa/AEB0NZ5XVdMwywDJbMKQb6TNBe/WqC0WoAn+1CovbembO0wTfsMQ2ybjS51M4NLHtQDPC2s8lGXPFsW3kKN/lRznIZPBmhDsqUueyUZmElipShsdgWInot381FITsef6q1KvH7xyB9EecEftaNDSIQmANvsvCADRDFyQBqdPqMvKxY75A2YAQJhiL08sNdkxSMkctzs52ynvCeeijDERRWSOAETfvgKpQXtt50hjNMxvvC0/xD/8o78Ch9LEbj54OCZo1WkM983jNMP0JkJb90hTdddD+FaSgNzeUzMXdMVNEFxhJs6YQwyfAIDGRJ2U879Xk9/gGEzOl5odWTRXeQsAtILk1qailJxfmEBjWgV4EtdRgAEZ3w0Az4iix6tpkMYCxFXodkaK0fWimay93l1I7mWqDehzcvZYY9XkT4dKLOM4l4PKg4reCAAH7v/heUD1EhpV7b11y1UPwXInkHZWbuwX6LHIjzdUK7Fc1ZUiTg+LrbMxMkCpseNZEya8D4Dm+ls2/Kf1itx6+QgtmCiCY2PDhELykEez2gQ9GVzsL+dRAPmubGKlQf6ye7SJWjx0/eX90SAtua/WXQ9x7hkVRjCXSR/85pKR+YTmMmEoLgQgqSBQnpXwg5E7+EDsuH4wBFyTDZU3xj+Pd0jryW5szsLTL+nXL7y9MfEecgSuLt9AkTvZxfEyANLk+qmvITTxv8M8aQFey0rhegogzXopZDMq8qxwu7bEqYwrG4KCc25x/lOjf7I5VFsOosUYrHxkmMA9AJCtcc5Lg9gQYPozYs0c8M4Yt3EJuLIJZLruWRRQy73dXBGEy3mmXFGHllNrgFcLxUktF48Yx+Le6+/L9cuR88fHmQgp726HKYY4VsR/sSAo2NAC0HxgmpZTqWI6cZbx/kGj4q7rV/X65TjcLTUPdFwdgD3s3oNSRk5Ee129f+pUN6fFuEJ+4keqpr4AgLcH5Y0fuDNlVgFZL2EyBr52xgIse+IVQ7V9U/zTutit4onzuSXllh5bx/4FAF6M17/I4COf+X41eFHsArcnXJGsX7Nq65AtOn+yy210WUy/FgCs+UksCo6zFK6aIbDQ/t7YPRvQcL/60hysYTY+vxOr293S6wFgf2dt+yVH7CoC83UwyTq7M1IR7Zx0Yptza1ZAztqzw/UNAPjrODN9DYFxn8Zh8tRDXLFj7pSBFlzAaYRNtLMpcVvLWnuhv74LgJXhx2WC7GSjyIwN4s5ATZplAMZpo6Rw4fxmmVKvlStvAWC+a531gMsI1OZ39bKNu/PwYmN0Av+bkOyyDi1e3wjA1R/nAPQBy4BoKujIIfLpSP3CkaoTh3HOLn0YHDXNpcDomL8JgIUYQIrzuFcrTZZxP+iMfB2Dqr20zGB8/mGhBcbQzJsAmBWyksjhtgei+smqvZetHw/kebQbTINhu7sqn+WctXcBMLO90B8KXBlbnqwN6sWXUL9uQsU8mVoL+FwUrv6sJoN70/sBmBbBo7+BA6wUjsLn9WqdbPejxuePPwaVj/kjTp3BtDl3qqvl4Ob3AjAZ+arCNWrsjCR55NIsDA4QPMUIk5lKqiwwxJHVRuR9A64ppJ74zO8DgLa8j6UeniOYyReHeDIjnkas7tMIydu+mSNw5KEToG1pX6Mua8ZzPGTuh7wTgHHeJwidREPOcPiHDZkNpiazwvmiD5PBMFtsn10coDMkCZ/jIBiEyapgsfjznQBUBHAvgOcT43plEABMBGk6DwYXND+CAccO2zfIWhWlv/d8WDo32kRkDS2KiN4LQEYgm504Rjn/BDwhhyRmy8gVrge+azvygGvku4Oc7NrOQwfchWxOJ5H2ORqJIRm/NuLszQAwAvTVQCyPWATqghXZG5rvY1dAvNre2g4+8H53KdRiDh1TlcCmGwCop8oUVsgH58EnX3ZNvxsA3rcbi5ZWtCMC6B8XRwpVdmfrw6xGVgoM/jqAIcSYEs6WSAlH6FGcVGPzverWjk9yRZD0o/dEkydXI2LX+NLsfDsAWMmvbLllRTsihDBw/gBXlc3A6Hk99xwFIVWvx/GrGk8u5PInRW/L8TFpJHEQbc7GYUzen7bjUO8HAO3QcjqRB0IgrztOhpaRSbiee3WuEA2GUSf4b32EHm1hz/E9eD9jSebW9PFJxxwRWc8FfgCA0fKnJSmOrJJcLhH0mOCMoM+FVN0jrzZFhlvWwfBLSFwVAEkqEJngYLbaeN8OQPXR4WYwPBGiUVg9ixugUERUG2gIHulAne88PErLfHqwhrrjmc7iBdmdhORvSzXoWq2sZP0gADkEgN8M4BLrXP/Vy0AVrFaLagORdgMBf5sSziQlR30ZnRFSFIsDtzCC+j8TyfEuL/bD/x4AHKbFOCjlDmjz4WDRVQvIDLggBmygUEexo6j/jTJQqllLJdC8gIs3ePjhOrIOEBFVVwgiAYqBdAKNLqoyO/WbAdcPAYCiENkx5HGeaBl5R3YaX5cDPSHMaAKhrufMoO4ulBOVmBzM2cGxCQAzgnBQKqZBIaAqCYBIRKryqgQH/jIAFAKQ6Kg4buBm47CnJ9ZUDkZHsRMLCJV/AOVPFWJkEwxt8tTBkQXAGrTIzkXHeFaKJxV0K/T4OQAoVwgP43uiU7hrnAyMC9avFLdkc0AW5k5feAFYY6QEaECHR+bIF1GBJgkIdhHaTahw+5tFcR8EgPWh5Lr9CA/sUNRdAq1iyElzHPkMJ2M7EC59euVwxJhZo0Mjid6JJ+xIIIGBFjoHrsoC/Yh2U07VpW8AQKr+L106cAEWguHByyBqh/oKxQPtokRpJ3tNM/QdvmjIFprBKBuBSnIdnWOtJ6nPONvDPEoMW+jYO76Rc/kcAFQHwvUDILI1AsCzYchd+4WHELmrg0cmAHn7PDxc4IsEYdEKfM0MAIF3wI/GsTMUDuGOvHz90YlvAUCOA1ns9qGqnaBqObQ0Ka9gJMdxLH/emKHMTpXCX8PKUVCn9PfwG8OOYFXxREmdY2+H7wGAlBys4lmg2DfPY0HKAE5L3nIaIo0fR1JIIVxDvz45lby8o+XWTIy5o3E54AQBHMti6Q++/u7mmN9PAlDSIDw+B1zEnqLlPVdxUTs5/tvRX1k7aL85eY2YwFJDMP+srMX1yCuZFzgR910AqFQJEBxBymWlnTmA/djB8p5NsuqVOG3WyiGFGDvixou18xSVY44N8UylbwRArcnCmlikcxfy9E8iZcyfcU8AF0qH5UaecaIKenmOp/UzDwCMPC83O5jJcyngNwJAycqbbLiCmVJcmLwVOTiXmCpyGnGMmB7IGu5bMVDyTXk5qdWnevzBmyOZwRgZ+yYASMt2QI4A1HRG5oDxlymGzwGMkmPsXbaGa9KRuyR5UreOydNYKoyOxBway/Wa3GD4LQAQfqDFqDUIEnNQvzfOkAkUwP6LA1sIIMncOH25bzaItykeXxpJifVVTrJRADoXhH8nAFzJYSpZo4HICR35emgUg7mjc5QA5LpO4/jpYgu26+VcxQPdDJkDK0M+vmBJ+M0AqLdD6waZE0CHK540i38cyCi0AxC7G8YLB3PwIGfRYOVLDbLEuGgssSHZ9hJ8OwBGAi2x3EQYIAOzzsKgOcY0wEXcnMCadSHNz4XTmxxVizyhsG2lmAMwfA6A2HaIThZPMAQ4VDI/J2LQH/L1GqurJSy/Coqy+1yA1PPjzwFIs5q6t2aHMQEQVgHIWpCetcY1sUK+E/LEUyTwXM7cXkKBbnNtEMK9RPkt3SwBPn5wtMdp9+j7AIhUCTSGIxarR3JzzKT5g0DQClW+UtuhUfzesWsTaBhPwlTQWf4zLzVoAeBuIdEQwdsAoI5Z7FUtAamV3SuYEKI7OxAG+Swp5vyXOlYfOA/Ol/LA2SKODA41SWz1URZ6Sksxlz+YSwjJEqk/9SYAorvQigcuTwgbAJSEkGI6MK7pBEkU+nEUBDHULmZowSDnC1MbG8vtNYDlau9FBQDIn+SmVE112psKJfn6beRJccQGW9t3KBjKGDBLh2k/DGdFI+ZIp3eLEFmQnDyaU8h2Qs8aANzLoUPiNHXeXvIOAMgFz4V6VBNIbHBj/VD0mQ4IhI7o+0ZYdChMcqm/pCbNkmsAJKTJXxyUofKkzJtvACBwe27RgD6zwe39S9GPjWKqRgOdI/sf4+HcOJO5AgODx4qYNjdLKggAyk3l8qzcqt0dkAheDgDXv7WF0OSiwlN2X4yxyY1isvZMUlhUyktuIO1RUDTpIvwBNRUcWwDg1PFperje0qsbJqwVar4njNlAdXfM8eGsWE+VAU1W7HxuE6YEjaT8mI9f91hglAgf4DB5KG4eBWe5eykAnTqN8mWRIL9zkFHi0L/WdOOTHQxHpI95fuwOALru9HueH+GxFfLFAGzUPwdKDz80yQn3TiLLN1tFHcuEGB9qrSEA1qojYi7afi0Acr0dl2yQp0dZ7XqhDNhID3LI7aUyQGyWvwMb/C0AttODRAQvBODmlBrQRH8HgFvZcTTZXwjA7e6H5P4OALcbc+BeXgbAl8NZ4t8AIH31VPe3q33VOnv9l77SiwD4779+APgB4AeAHwB+APgB4AeAHwB+APgB4AeAHwB+APgB4AeA/7/X/wDVBj3zUZVx/gAAAABJRU5ErkJggg==";
   // Show a thumbnail; if it is missing or broken, show the fallback image instead
-  function showImg(thumb, src) {
-    const img = new Image();
-    img.alt = ""; img.referrerPolicy = "no-referrer";
-    img.onload = () => thumb.prepend(img);
-    img.onerror = () => { if (src !== FALLBACK_IMG) showImg(thumb, FALLBACK_IMG); };
-    img.src = src;
+  function showImg(thumb, srcOrList) {
+    const list = Array.isArray(srcOrList) ? srcOrList.slice() : [srcOrList];
+    const next = () => {
+      const src = list.shift();
+      if (src === undefined) return;
+      const img = new Image();
+      img.alt = ""; img.referrerPolicy = "no-referrer";
+      img.onload = () => thumb.prepend(img);
+      img.onerror = () => { if (list.length) next(); else if (src !== FALLBACK_IMG) showImg(thumb, FALLBACK_IMG); };
+      img.src = src;
+    };
+    next();
   }
   const iconObserver = new IntersectionObserver(entries => {
     entries.forEach(async e => {
@@ -684,10 +728,36 @@
     return list;
   }
 
+  /* ---------- sources.json: { "name": "...", "owner": "...", "repo": "...", "branch": "main", "path": "" } entries each become a collection ---------- */
+  async function loadExternalSources() {
+    let list;
+    try {
+      const r = await fetch(rawUrl("sources.json"));
+      if (!r.ok) return;
+      list = await r.json();
+    } catch (e) { return; }
+    if (!Array.isArray(list)) return;
+    await Promise.all(list.map(async (src, i) => {
+      const key = "ext" + i, label = src.name || src.repo;
+      COLLS[key] = { label, load: async () => {
+        const o = src.owner, r = src.repo, b = src.branch || "main", base = String(src.path || "").replace(/^\/+|\/+$/g, "");
+        const api = `https://api.github.com/repos/${o}/${r}`;
+        const top = await getJSON(`${api}/contents${base ? "/" + base : ""}?ref=${b}`);
+        const dirs = top.filter(i => i.type === "dir"), files = top.filter(i => i.type === "file" && /\.html?$/i.test(i.name) && !/^(index|readme)\.html?$/i.test(i.name));
+        // Folder-per-game (like Selenite) if most entries are folders; otherwise flat .html files (like the main repo)
+        if (dirs.length && dirs.length >= files.length) {
+          return dirs.map(d => ({ key: `${key}:${d.path}`, name: prettyName(d.name + ".x"), url: cdnCandidates(o, r, b, `${d.path}/index.html`)[0], cat: label }));
+        }
+        return files.map(f => ({ key: `${key}:${f.path}`, name: prettyName(f.name), url: cdnCandidates(o, r, b, f.path)[0], cat: label }));
+      } };
+    }));
+  }
+
   /* ---------- The catalogs load in the background; the site updates as each one arrives ---------- */
   const COLLS = { ai: { label: "AI Games", load: loadAIGames }, ugs: { label: "UGS Collection", load: loadUGS }, sel: { label: "Selenite", load: loadSelenite }, six: { label: "Seixorp", load: loadSeixorp } };
   const normName = n => String(n).toLowerCase().replace(/\W/g, "");
   async function loadCollections() {
+    await loadExternalSources();                                             // sources.json may add more collections to COLLS
     const have = new Set(state.games.map(g => normName(g.name)));            // one copy of each game, earlier sources win
     await Promise.all(Object.entries(COLLS).map(async ([k, c]) => {
       try {
@@ -771,7 +841,7 @@
   }
 
   /* ---------- Pages: every page has its own address (#feed, #links, #settings, #Shooter ...) so Back works ---------- */
-  const PAGES = { feed: ["Game Feed", "feed.html"], links: ["Links", "links.html"], Roms: ["Roms", "Roms.html"] };    // pages that show a file from the repo
+  const PAGES = { feed: ["Game Feed", "feed.html"], links: ["Links", "links.html"], smor: ["Smor", "smor.html"] };    // pages that show a file from the repo
   function go(view, sub = "") {
     state.view = view; state.sub = sub; state.q = ""; $("search").value = "";
     try { history.pushState(null, "", "#" + encodeURIComponent(view)); } catch (e) {}
@@ -881,7 +951,7 @@
     const about = document.createElement("section");
     about.className = "about";
     const h = document.createElement("h2"), p = document.createElement("p");
-    h.textContent = "About " + g.name; p.textContent = describe(g);
+    h.textContent = "About " + displayName(g); p.textContent = describe(g);
     about.append(h, p);
     // Related games as picture tiles, then category tiles
     const more = document.createElement("section"), tiles = document.createElement("div"), cats = document.createElement("div");
@@ -902,7 +972,7 @@
     const order = [...CATS.map(c => c[0]), "More Games", ...found.filter(n => !CATS.some(c => c[0] === n) && n !== "More Games")];   // Flash Games etc. come last
     return order.filter(n => found.includes(n));
   }
-  const allGames = () => [...state.games, ...state.ai, ...state.ugs, ...state.sel, ...state.six];      // main + Flash + every collection
+  const allGames = () => [...state.games, ...Object.keys(COLLS).flatMap(k => state[k] || [])];      // main + Flash + every collection (AI/UGS/Selenite/Seixorp and any sources.json extras)
   const likedGames = () => allGames().filter(g => state.votes[g.key] === 1);
 
   function renderChips() {
@@ -920,8 +990,16 @@
       $("chips").append(b);
     });
   }
+  function isJHQuery(q) {
+    const t = q.replace(/[^a-z]/g, "");
+    return t === "jackson" || t === "hagen" || t === "jacksonhagen" || t === "hagenjackson";
+  }
+  function jhFavorites() {
+    return allGames().filter(g => /street\s*fighter/i.test(g.name) || (/ragdoll/i.test(g.name) && /archer/i.test(g.name)));
+  }
   function viewList() {
     const q = state.q.toLowerCase();
+    if (q && isJHQuery(q)) return jhFavorites();
     if (q) return allGames().filter(g => g.name.toLowerCase().includes(q) || g.key.toLowerCase().includes(q));
     if (state.view === "liked") return likedGames();
     if (state.view === "recent") return state.recent.map(k => state.byKey.get(k)).filter(Boolean);
@@ -935,12 +1013,12 @@
     iconObserver.disconnect();
     grid.innerHTML = "";
     grid.hidden = false; statusEl.hidden = true;
-    const onPage = ["feed", "links", "Roms", "settings", "bookmarklets"].includes(state.view) && !state.q;     // these have their own pages
+    const onPage = ["feed", "links", "smor", "settings", "bookmarklets"].includes(state.view) && !state.q;     // these have their own pages
     $("subtabs").hidden = !(["settings", "links", "bookmarklets", "six", "changelog"].includes(state.view) && !state.q);
     document.querySelectorAll("#subtabs button").forEach(b => b.classList.toggle("on", b.dataset.v === state.view));
     $("settings").hidden = !(onPage && state.view === "settings");
     const home = state.view === "home" && !state.q;
-    $("heading").textContent = state.q ? "Search results" : home ? "Home" : { liked: "Liked games", recent: "Recently played", ai: "AI Games", ugs: "UGS Collection", sel: "Selenite", links: "Links", feed: "Game Feed", settings: "Settings", bookmarklets: "Bookmarklets", six: "Seixorp", changelog: "Changelog" }[state.view] || state.view;
+    $("heading").textContent = (state.q && isJHQuery(state.q)) ? "Jackson Hagen\u2019s Favorites" : state.q ? "Search results" : home ? "Home" : { liked: "Liked games", recent: "Recently played", ai: "AI Games", ugs: "UGS Collection", sel: "Selenite", links: "Links", feed: "Game Feed", settings: "Settings", bookmarklets: "Bookmarklets", six: "Seixorp", changelog: "Changelog" }[state.view] || state.view;
     if (home) {
       // Home page: recently played, then a short row per category and collection
       const total = allGames().length, per = Math.max(2, Math.floor(grid.clientWidth / (SIZES[state.set.size] + 16)));
@@ -1019,7 +1097,7 @@
     thumb.append(pill, votes);
     const body = document.createElement("div"), title = document.createElement("h3"), cat = document.createElement("div");
     body.className = "card-body"; title.className = "card-title"; cat.className = "card-cat";
-    title.textContent = g.name; title.title = g.name; cat.textContent = g.sub || g.cat;
+    title.textContent = displayName(g); title.title = displayName(g); cat.textContent = g.sub || g.cat;
     body.append(title, cat);
     card.append(thumb, body);
     card.onclick = e => { if (!e.target.closest(".vbtn")) openGame(g); };
@@ -1031,10 +1109,78 @@
   $("refreshBtn").onclick = () => loadGames(true);
 
   /* ---------- Game modal (games and the Game Feed both use it) ---------- */
+  // Overrides set in Debug mode: a local-only rename/re-picture for one game, kept in this browser only
+  function displayName(g) { const ov = store.get("overrides", {})[g.key]; return (ov && ov.name) || g.name; }
+  function getOverride(key) { return store.get("overrides", {})[key] || {}; }
+  function setOverride(key, patch) {
+    const all = store.get("overrides", {}), merged = Object.assign({}, all[key], patch);
+    Object.keys(merged).forEach(k => { if (!merged[k]) delete merged[k]; });
+    if (Object.keys(merged).length) all[key] = merged; else delete all[key];
+    store.set("overrides", all);
+    iconCache.delete(key);
+  }
+  function buildDebugPanel(g) {
+    const panel = $("debugPanel"), ov = getOverride(g.key);
+    panel.innerHTML = `<div class="dbg-row">
+      <label>Display name <input id="dbgName" type="text"></label>
+      <label>Thumbnail URL <input id="dbgThumb" type="text" placeholder="https://..."></label>
+      <button class="btn primary" id="dbgSave">Save (this browser)</button>
+      <button class="btn" id="dbgReset">Reset</button>
+    </div>
+    <div class="dbg-row">
+      <span>Theme:</span>
+      <button class="btn" data-t="dark">Dark</button><button class="btn" data-t="light">Light</button><button class="btn" data-t="halloween">Halloween</button>
+      <button class="btn" id="dbgSrc">View source</button>
+    </div>
+    <pre id="dbgSrcBody" hidden></pre>`;
+    panel.querySelector("#dbgName").value = ov.name || "";
+    panel.querySelector("#dbgThumb").value = ov.thumb || "";
+    document.querySelectorAll(".dbg [data-t]").forEach(b => { b.classList.toggle("on", b.dataset.t === state.set.theme); b.onclick = () => { state.set.theme = b.dataset.t; applySettings(); }; });
+    panel.querySelector("#dbgSave").onclick = () => {
+      setOverride(g.key, { name: panel.querySelector("#dbgName").value.trim(), thumb: panel.querySelector("#dbgThumb").value.trim() });
+      $("modalTitle").textContent = displayName(g);
+      if (state.games.length) render();
+    };
+    panel.querySelector("#dbgReset").onclick = () => {
+      setOverride(g.key, { name: "", thumb: "" });
+      panel.querySelector("#dbgName").value = ""; panel.querySelector("#dbgThumb").value = "";
+      $("modalTitle").textContent = displayName(g);
+      if (state.games.length) render();
+    };
+    panel.querySelector("#dbgSrc").onclick = async () => {
+      const body = panel.querySelector("#dbgSrcBody");
+      body.hidden = !body.hidden;
+      if (!body.hidden && !body.textContent) {
+        body.textContent = "Loading\u2026";
+        try { body.textContent = (await (await fetch((g.urls && g.urls[0]) || g.url)).text()).slice(0, 200000); }
+        catch (e) { body.textContent = "Couldn't load the source."; }
+      }
+    };
+  }
+  let playToken = 0;
   function openGame(g, track = true) {
-    $("modalTitle").textContent = g.name;
-    if (g.swf) frame.srcdoc = ruffleDoc(g.swf);               // Flash games run inside Ruffle
-    else { frame.removeAttribute("srcdoc"); frame.src = g.url; }
+    const myToken = ++playToken;
+    $("modalTitle").textContent = displayName(g);
+    $("debugBtn").hidden = !state.set.debug;
+    $("debugPanel").hidden = true; $("debugPanel").innerHTML = "";
+    $("debugBtn").onclick = () => { const p = $("debugPanel"); p.hidden = !p.hidden; if (!p.hidden && !p.innerHTML) buildDebugPanel(g); };
+    if (g.swf) { frame.onload = null; frame.srcdoc = ruffleDoc(g.swf); }               // Flash games run inside Ruffle
+    else {
+      frame.removeAttribute("srcdoc");
+      // Tries each backup CDN in turn if the game doesn't load within a few seconds (main-repo games only; other
+      // collections have a single URL for now). This can't catch every failure (e.g. a 404 page that still "loads"),
+      // only outright network/DNS failures - but it covers a dead mirror.
+      const list = (g.urls && g.urls.length ? g.urls.slice() : [g.url]);
+      const attempt = () => {
+        if (myToken !== playToken || !list.length) return;
+        const src = list.shift();
+        let settled = false;
+        frame.onload = () => { settled = true; };
+        frame.src = src;
+        if (list.length) setTimeout(() => { if (myToken === playToken && !settled) attempt(); }, 6000);
+      };
+      attempt();
+    }
     $("modal").hidden = false;
     document.body.style.overflow = "hidden";
     $("modalVotes").hidden = !track;
@@ -1050,8 +1196,10 @@
     if (track) try { history.pushState(null, "", "#play=" + encodeURIComponent(g.key)); } catch (e) {}
   }
   function closeGame() {
+    playToken++;                                            // stops any pending CDN-fallback retry for the closed game
     $("modal").hidden = true;
     try { history.pushState(null, "", "#" + encodeURIComponent(state.view)); } catch (e) {}
+    frame.onload = null;
     frame.removeAttribute("srcdoc");
     frame.src = "about:blank"; // stops the game and its sound
     document.body.style.overflow = "";
@@ -1074,7 +1222,7 @@
     window.open("https://forms.gle/aQbx7JWNNM8XWyXs7", "_blank", "noopener");
   };
   $("feedBtn").onclick = () => go("feed");
-  $("RomsBtn").onclick = () => go("Roms");
+  $("smorBtn").onclick = () => go("smor");
   $("homeBtn").onclick = () => go("home");
   $("themeSeg").onclick = e => { const t = e.target.dataset.t; if (t) { state.set.theme = t; applySettings(); } };
 
@@ -1123,21 +1271,24 @@
 
   /* ---------- Settings ---------- */
   function applySettings() {
-    const light = state.set.theme === "light", root = document.documentElement;
-    root.dataset.theme = light ? "light" : "dark";
-    root.style.setProperty("--accent", light ? "#1a8cff" : ACCENTS[state.set.accent] || ACCENTS.Ember);
-    root.style.setProperty("--accent-ink", light || state.set.accent === "Green" ? "#ffffff" : "#12100e");
+    const theme = state.set.theme, light = theme === "light", halloween = theme === "halloween", root = document.documentElement;
+    root.dataset.theme = theme;
+    root.style.setProperty("--accent", halloween ? "#ff7518" : light ? "#1a8cff" : ACCENTS[state.set.accent] || ACCENTS.Ember);
+    root.style.setProperty("--accent-ink", light || halloween || state.set.accent === "Green" ? "#ffffff" : "#12100e");
     root.style.setProperty("--min", SIZES[state.set.size] + "px");
     store.set("settings2", state.set);
     document.querySelectorAll(".swatch").forEach(b => b.classList.toggle("on", b.title === state.set.accent));
     document.querySelectorAll("#sizeSeg button").forEach(b => b.classList.toggle("on", b.textContent === state.set.size));
     $("optIcons").checked = state.set.icons;
     $("optHotkey").checked = state.set.hotkey;
-    document.querySelectorAll("#themeSeg button").forEach(b => b.classList.toggle("on", b.dataset.t === (light ? "light" : "dark")));
+    $("optDebug").checked = state.set.debug;
+    $("debugBtn").hidden = !state.set.debug;
+    document.querySelectorAll("#themeSeg button, .dbg [data-t]").forEach(b => b.classList.toggle("on", b.dataset.t === theme));
     renderKeys();
     $("ghToken").value = store.get("ghtoken", "");
   }
   $("ghToken").addEventListener("change", e => store.set("ghtoken", e.target.value.trim()));
+  $("optDebug").onchange = e => { state.set.debug = e.target.checked; applySettings(); };
   Object.entries(ACCENTS).forEach(([name, c]) => {
     const b = document.createElement("button");
     b.className = "swatch"; b.title = name; b.setAttribute("aria-label", name + " accent"); b.style.background = c;
