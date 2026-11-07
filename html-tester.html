@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML tester · Octo Arcade</title>
+<style>
+:root{--ink:#15131f;--panel:#211e30;--line:#34304a;--text:#ece9f6;--muted:#9d98b5;--pink:#ff6b8b;--teal:#62d9d0}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.top .logo{font-weight:800;font-size:18px;margin-right:auto}.logo b{color:var(--pink)}
+button,select,label.btn{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--teal)}
+button.go{background:var(--pink);border-color:var(--pink);color:#1a0b10;font-weight:600}
+main{flex:1;display:grid;grid-template-columns:1fr 1fr;min-height:0}
+.pane{display:flex;flex-direction:column;min-height:0;min-width:0}
+.pane+.pane{border-left:1px solid var(--line)}
+.tabs{display:flex;gap:2px;padding:8px 8px 0;border-bottom:1px solid var(--line)}
+.tabs button{border-radius:8px 8px 0 0;border-bottom:0;color:var(--muted)}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--text);border-color:var(--line);box-shadow:0 2px 0 var(--ink)}
+textarea{flex:1;width:100%;resize:none;border:0;background:var(--ink);color:var(--text);padding:14px;font:13px/1.55 ui-monospace,Menlo,Consolas,monospace;tab-size:2;white-space:pre}
+textarea:focus{outline:none}
+iframe{flex:1;width:100%;border:0;background:#fff}
+#log{height:120px;overflow:auto;border-top:1px solid var(--line);background:var(--panel);padding:8px 12px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace}
+#log div{white-space:pre-wrap;border-bottom:1px solid var(--line)}
+#log .error{color:var(--pink)}#log .warn{color:#f2c46d}
+.hd{display:flex;justify-content:space-between;padding:6px 12px;color:var(--muted);border-bottom:1px solid var(--line)}
+@media(max-width:800px){main{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.pane+.pane{border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="logo" href="./">Octo<b>Arcade</b> · HTML tester</a>
+  <a href="iframe-tester.html"><button>Iframe tester</button></a>
+  <label class="btn"><input id="auto" type="checkbox" checked> Auto-run</label>
+  <button id="share">Copy share link</button>
+  <button id="dl">Download .html</button>
+  <button id="tab">Open in new tab</button>
+  <button id="reset">Reset</button>
+  <button id="run" class="go">Run</button>
+</div>
+<main>
+  <section class="pane">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-k="html" aria-selected="true">HTML</button>
+      <button role="tab" data-k="css" aria-selected="false">CSS</button>
+      <button role="tab" data-k="js" aria-selected="false">JS</button>
+    </div>
+    <textarea id="ed" spellcheck="false" aria-label="Code editor"></textarea>
+  </section>
+  <section class="pane">
+    <div class="hd"><span>Preview</span><button id="clr" style="padding:0 8px">Clear console</button></div>
+    <iframe id="out" title="Preview" sandbox="allow-scripts allow-modals allow-forms allow-popups allow-pointer-lock"></iframe>
+    <div id="log" aria-live="polite"></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var DEFAULT = {
+    html: '<h1>Hello, Octo Arcade</h1>\n<button id="b">Click me</button>\n<p id="n">0 clicks</p>',
+    css: 'body{font-family:system-ui;padding:24px}\nbutton{padding:8px 14px}',
+    js: 'var n = 0;\ndocument.getElementById("b").onclick = function () {\n  n++;\n  document.getElementById("n").textContent = n + " clicks";\n  console.log("clicked", n);\n};'
+  };
+  var S = JSON.parse(JSON.stringify(DEFAULT)), cur = 'html', timer;
+
+  function load() {
+    try {
+      if (location.hash.indexOf('#c=') === 0) { S = JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))); return; }
+      var saved = localStorage.getItem('octo.html-tester'); if (saved) S = JSON.parse(saved);
+    } catch (e) {}
+  }
+  function save() { try { localStorage.setItem('octo.html-tester', JSON.stringify(S)); } catch (e) {} }
+
+  var HOOK = '(function(){function s(t,a){try{parent.postMessage({octo:1,t:t,m:[].map.call(a,function(x){try{return typeof x==="object"?JSON.stringify(x):String(x)}catch(e){return String(x)}}).join(" ")},"*")}catch(e){}}' +
+    '["log","warn","error","info"].forEach(function(k){var o=console[k];console[k]=function(){s(k,arguments);o.apply(console,arguments)}});' +
+    'window.addEventListener("error",function(e){s("error",[e.message+" (line "+e.lineno+")"])});})();';
+
+  function build() {
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + S.css +
+      '</style></head><body>' + S.html + '<script>' + HOOK + '<\/script><script>' + S.js + '<\/script></body></html>';
+  }
+  function run() { $('#log').innerHTML = ''; $('#out').srcdoc = build(); }
+  function queue() { save(); if ($('#auto').checked) { clearTimeout(timer); timer = setTimeout(run, 400); } }
+
+  function show(k) {
+    cur = k; $('#ed').value = S[k];
+    document.querySelectorAll('.tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.k === k); });
+  }
+
+  document.querySelectorAll('.tabs button').forEach(function (b) { b.onclick = function () { show(b.dataset.k); }; });
+  $('#ed').addEventListener('input', function (e) { S[cur] = e.target.value; queue(); });
+  $('#ed').addEventListener('keydown', function (e) {
+    if (e.key === 'Tab') { e.preventDefault(); var t = e.target, s = t.selectionStart; t.setRangeText('  ', s, t.selectionEnd, 'end'); S[cur] = t.value; queue(); }
+  });
+  $('#run').onclick = run;
+  $('#clr').onclick = function () { $('#log').innerHTML = ''; };
+  $('#reset').onclick = function () { if (confirm('Reset all three editors?')) { S = JSON.parse(JSON.stringify(DEFAULT)); show(cur); save(); run(); } };
+  $('#dl').onclick = function () {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([build()], { type: 'text/html' }));
+    a.download = 'sandbox.html'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  };
+  $('#tab').onclick = function () { var u = URL.createObjectURL(new Blob([build()], { type: 'text/html' })); window.open(u, '_blank'); };
+  $('#share').onclick = function () {
+    var link = location.href.split('#')[0] + '#c=' + btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+    (navigator.clipboard ? navigator.clipboard.writeText(link) : Promise.reject()).then(function () { $('#share').textContent = 'Copied'; }, function () { prompt('Copy this link:', link); });
+    setTimeout(function () { $('#share').textContent = 'Copy share link'; }, 1500);
+  };
+  window.addEventListener('message', function (e) {
+    if (e.source !== $('#out').contentWindow || !e.data || !e.data.octo) return;
+    var d = document.createElement('div'); d.className = e.data.t; d.textContent = e.data.m; $('#log').appendChild(d); $('#log').scrollTop = 1e9;
+  });
+
+  load(); show('html'); run();
+})();
+</script>
+</body>
+</html>
