@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Octo Music - Auto MP3 Sync</title>
+  <title>Octo Music - GitHub Auto Library</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -155,23 +155,6 @@
     const REPO_NAME = 'OctoArcade';
     const BRANCH = 'main';
 
-    const CDN_PROVIDERS = [
-      (path) => `https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${path}`,
-      (path) => `https://cdn.statically.io/gh/${REPO_USER}/${REPO_NAME}/${BRANCH}/${path}`,
-      (path) => `https://fastly.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${path}`
-    ];
-
-    async function getCDNUrl(path) {
-      for (const buildUrl of CDN_PROVIDERS) {
-        const targetUrl = buildUrl(path);
-        try {
-          const res = await fetch(targetUrl, { method: 'HEAD' });
-          if (res.ok) return targetUrl;
-        } catch (e) {}
-      }
-      return CDN_PROVIDERS[0](path);
-    }
-
     let libraryTracks = [];
     let userPlaylists = JSON.parse(localStorage.getItem('octo_playlists') || '{"Favorites": []}');
     let activePlaylist = null;
@@ -207,7 +190,6 @@
       });
     }
 
-    // Automatically scans the Songs/mp3 folder on GitHub
     async function autoDiscoverMP3s() {
       activePlaylist = null;
       renderPlaylists();
@@ -218,7 +200,7 @@
         if (!apiRes.ok) throw new Error('Failed to reach GitHub repository contents API');
         
         const files = await apiRes.json();
-        const mp3Files = files.filter(f => f.name.toLowerCase().endsWith('.mp3'));
+        const mp3Files = files.filter(f => f.name.toLowerCase().includes('.mp3'));
 
         if (mp3Files.length === 0) {
           trackGrid.innerHTML = '<div class="state-msg">No MP3 files found inside the <code>Songs/mp3/</code> folder on GitHub!</div>';
@@ -227,14 +209,13 @@
 
         libraryTracks = [];
         for (const file of mp3Files) {
-          // Clean up filename for display (e.g., "Sweet_-_Ballroom_Blitz.mp3" -> Title & Artist)
           let cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ");
           let parts = cleanName.split(' - ');
 
           let title = parts.length > 1 ? parts[1] : parts[0];
           let artist = parts.length > 1 ? parts[0] : 'Unknown Artist';
 
-          const audioUrl = await getCDNUrl(`Songs/mp3/${file.name}`);
+          const audioUrl = `https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/Songs/mp3/${file.name}`;
 
           libraryTracks.push({
             title: title,
@@ -248,7 +229,7 @@
         renderGrid(currentTracks);
       } catch (err) {
         console.error(err);
-        trackGrid.innerHTML = '<div class="state-msg">Error scanning GitHub folder. Ensure repository public status is active.</div>';
+        trackGrid.innerHTML = '<div class="state-msg">Error scanning GitHub folder. Check your repository settings.</div>';
       }
     }
 
@@ -307,9 +288,15 @@
       currentIndex = index;
       const track = currentTracks[currentIndex];
       audio.src = track.audio;
-      audio.play();
-      isPlaying = true;
-      playIcon.className = "fa-solid fa-pause";
+      audio.load();
+      audio.play().then(() => {
+        isPlaying = true;
+        playIcon.className = "fa-solid fa-pause";
+      }).catch(err => {
+        console.error("Playback error:", err);
+        alert("Playback blocked or file format unsupported. Ensure the file extension is strictly .mp3");
+      });
+      
       currTitle.textContent = track.title;
       currArtist.textContent = track.artist;
       currImg.src = track.cover;
@@ -372,7 +359,6 @@
       renderGrid(filtered);
     };
 
-    // Initialize Application
     renderPlaylists();
     autoDiscoverMP3s();
   </script>
