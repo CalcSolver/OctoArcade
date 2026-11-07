@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Octo Music - GitHub CDN Edition</title>
+  <title>Octo Music - Auto-Sync Library</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -115,11 +115,11 @@
 
       <div class="hero-banner">
         <h1 id="feedTitle">GitHub Songs Library</h1>
-        <p>Streaming direct from your repository via Multi-CDN switchers</p>
+        <p>Auto-syncing library straight from your repository folders</p>
       </div>
 
       <div class="track-grid" id="trackGrid">
-        <div class="state-msg">Loading songs from GitHub CDN nodes...</div>
+        <div class="state-msg">Auto-discovering songs from GitHub...</div>
       </div>
     </main>
   </div>
@@ -151,12 +151,10 @@
   <audio id="audioEngine"></audio>
 
   <script>
-    // GitHub repository configuration
     const REPO_USER = 'CalcSolver';
     const REPO_NAME = 'OctoArcade';
     const BRANCH = 'main';
 
-    // Multi-CDN Gateways
     const CDN_PROVIDERS = [
       (path) => `https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${path}`,
       (path) => `https://cdn.statically.io/gh/${REPO_USER}/${REPO_NAME}/${BRANCH}/${path}`,
@@ -184,10 +182,6 @@
       }
       return CDN_PROVIDERS[0](path);
     }
-
-    // List of your song filenames (without extension) placed in Songs/metadata/ and Songs/mp3/
-    // You can manually add more song IDs to this array as you upload them to GitHub!
-    const SONG_IDS = ['ballroomblitz'];
 
     let libraryTracks = [];
     let userPlaylists = JSON.parse(localStorage.getItem('octo_playlists') || '{"Favorites": []}');
@@ -224,34 +218,55 @@
       });
     }
 
-    async function loadGitHubLibrary() {
+    // Automatically scans GitHub directory contents to find all songs without manual arrays!
+    async function autoDiscoverGitHubLibrary() {
       activePlaylist = null;
       renderPlaylists();
-      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Fetching song metadata via CDN...</div>';
+      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Auto-discovering songs from GitHub...</div>';
 
-      libraryTracks = [];
-      for (const id of SONG_IDS) {
-        try {
-          const metaRes = await fetchAssetWithCDNSwitcher(`Songs/metadata/${id}.json`);
-          const meta = await metaRes.json();
-          const audioUrl = await getCDNUrl(`Songs/mp3/${id}.mp3`);
+      try {
+        // Fetch metadata folder contents via GitHub API
+        const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/Songs/metadata`);
+        if (!apiRes.ok) throw new Error('Failed to reach GitHub repository contents API');
+        
+        const files = await apiRes.json();
+        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
 
-          libraryTracks.push({
-            title: meta.name || id,
-            artist: meta.artist || 'Unknown Artist',
-            cover: meta.cover || 'https://via.placeholder.com/300/181818/ffffff?text=Octo+Music',
-            audio: audioUrl
-          });
-        } catch (err) {
-          console.warn(`Could not load song ID: ${id}`, err);
+        if (jsonFiles.length === 0) {
+          trackGrid.innerHTML = '<div class="state-msg">No metadata JSON files found inside Songs/metadata/ on GitHub!</div>';
+          return;
         }
-      }
 
-      currentTracks = libraryTracks;
-      if (currentTracks.length > 0) {
-        renderGrid(currentTracks);
-      } else {
-        trackGrid.innerHTML = '<div class="state-msg">No tracks found in repository. Ensure metadata JSON and MP3 files match your SONG_IDS array!</div>';
+        libraryTracks = [];
+        for (const file of jsonFiles) {
+          try {
+            const songId = file.name.replace('.json', '');
+            const metaRes = await fetchAssetWithCDNSwitcher(`Songs/metadata/${file.name}`);
+            const meta = await metaRes.json();
+            
+            // Check for matching mp3 file name in mp3 folder, or use songId
+            const audioUrl = await getCDNUrl(`Songs/mp3/${songId}.mp3`);
+
+            libraryTracks.push({
+              title: meta.name || meta.title || songId,
+              artist: meta.artist || 'Unknown Artist',
+              cover: meta.cover || 'https://via.placeholder.com/300/181818/ffffff?text=Octo+Music',
+              audio: audioUrl
+            });
+          } catch (err) {
+            console.warn(`Failed loading song: ${file.name}`, err);
+          }
+        }
+
+        currentTracks = libraryTracks;
+        if (currentTracks.length > 0) {
+          renderGrid(currentTracks);
+        } else {
+          trackGrid.innerHTML = '<div class="state-msg">Could not parse song files. Check your JSON format!</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        trackGrid.innerHTML = '<div class="state-msg">Error auto-discovering library. Check your repository public status.</div>';
       }
     }
 
@@ -266,7 +281,7 @@
     function renderGrid(tracks) {
       trackGrid.innerHTML = '';
       if (tracks.length === 0) {
-        trackGrid.innerHTML = '<div class="state-msg">This playlist is empty.</div>';
+        trackGrid.innerHTML = '<div class="state-msg">No tracks found.</div>';
         return;
       }
 
@@ -377,7 +392,7 @@
 
     // Initialize Application
     renderPlaylists();
-    loadGitHubLibrary();
+    autoDiscoverGitHubLibrary();
   </script>
 </body>
 </html>
