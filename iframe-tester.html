@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iframe tester · Octo Arcade</title>
+<style>
+:root{--ink:#15131f;--panel:#211e30;--line:#34304a;--text:#ece9f6;--muted:#9d98b5;--pink:#ff6b8b;--teal:#62d9d0}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--ink);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+.logo{font-weight:800;font-size:18px;margin-right:auto}.logo b{color:var(--pink)}
+button,select,input[type=text],textarea{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+button{cursor:pointer}button:hover{border-color:var(--teal)}
+button.go{background:var(--pink);border-color:var(--pink);color:#1a0b10;font-weight:600}
+.modes button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#06201e;font-weight:600}
+.ctl{padding:14px 16px;display:grid;gap:10px;border-bottom:1px solid var(--line)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#val{flex:1 1 320px}
+textarea#val{min-height:110px;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;width:100%}
+.opts{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted)}
+.opts label{white-space:nowrap}
+#note{color:var(--muted);font-size:13px}
+#warn{color:#f2c46d;font-size:13px}
+.stage{flex:1;display:grid;place-items:start center;padding:16px;overflow:auto;background:#0f0d17}
+iframe{background:#fff;border:1px solid var(--line);width:100%;height:70vh;max-width:100%}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div class="top">
+  <a class="logo" href="./">Octo<b>Arcade</b> · Iframe tester</a>
+  <a href="html-tester.html"><button>HTML tester</button></a>
+</div>
+
+<section class="ctl">
+  <div class="row modes" role="group" aria-label="Input type">
+    <button data-m="url" aria-pressed="true">URL</button>
+    <button data-m="src" aria-pressed="false">Source string</button>
+    <button data-m="repo" aria-pressed="false">Repo file</button>
+  </div>
+  <div class="row">
+    <input id="val" type="text" value="https://example.com" aria-label="URL or repo path" spellcheck="false">
+    <textarea id="srcv" class="hide" aria-label="HTML source" spellcheck="false">&lt;h1&gt;Hello from srcdoc&lt;/h1&gt;</textarea>
+    <span id="cdnwrap" class="hide"><select id="cdn" aria-label="CDN source"></select></span>
+    <button id="load" class="go">Load</button>
+  </div>
+  <div class="opts" id="opts">
+    <label><input type="checkbox" value="allow-scripts" checked> scripts</label>
+    <label><input type="checkbox" value="allow-forms" checked> forms</label>
+    <label><input type="checkbox" value="allow-popups" checked> popups</label>
+    <label><input type="checkbox" value="allow-pointer-lock" checked> pointer lock</label>
+    <label><input type="checkbox" value="allow-modals" checked> modals</label>
+    <label><input type="checkbox" value="allow-downloads"> downloads</label>
+    <label><input type="checkbox" value="allow-same-origin"> same origin (storage, cookies)</label>
+  </div>
+  <div class="row">
+    <label>Size <select id="size">
+      <option value="">Fill width</option>
+      <option value="1280x720">1280 × 720</option>
+      <option value="1024x768">1024 × 768</option>
+      <option value="768x1024">Tablet 768 × 1024</option>
+      <option value="390x844">Phone 390 × 844</option>
+    </select></label>
+    <button id="reload">Reload</button>
+    <button id="tab">Open in new tab</button>
+    <button id="full">Fullscreen</button>
+    <span id="note"></span>
+  </div>
+  <div id="warn" class="hide">Same origin plus scripts lets framed content from this site reach its storage. Use it only for your own files.</div>
+</section>
+
+<div class="stage"><iframe id="f" title="Test frame" allow="fullscreen; autoplay; gamepad; clipboard-write"></iframe></div>
+
+<script src="octo-cdn.js"></script>
+<script>
+(function () {
+  var $ = function (s) { return document.querySelector(s); };
+  var mode = 'url', timer, last = null;
+
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.modes button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.m === m); });
+    $('#val').classList.toggle('hide', m === 'src');
+    $('#srcv').classList.toggle('hide', m !== 'src');
+    $('#cdnwrap').classList.toggle('hide', m !== 'repo');
+    if (m === 'url' && !/^https?:/.test($('#val').value)) $('#val').value = 'https://';
+    if (m === 'repo' && /^https?:/.test($('#val').value)) $('#val').value = 'Games/2048.html';
+    $('#note').textContent = '';
+  }
+
+  function sandbox() {
+    var v = [].map.call(document.querySelectorAll('#opts input:checked'), function (i) { return i.value; });
+    $('#warn').classList.toggle('hide', !(v.indexOf('allow-same-origin') > -1 && v.indexOf('allow-scripts') > -1));
+    return v.join(' ');
+  }
+
+  function resize() {
+    var f = $('#f'), s = $('#size').value.split('x');
+    f.style.width = s[0] ? s[0] + 'px' : '100%';
+    f.style.height = s[1] ? s[1] + 'px' : '70vh';
+  }
+
+  async function load() {
+    var f = $('#f'), note = $('#note'); clearTimeout(timer);
+    f.setAttribute('sandbox', sandbox());
+    f.removeAttribute('srcdoc'); f.removeAttribute('src');
+    if (mode === 'src') { f.srcdoc = $('#srcv').value; last = { m: 'src' }; note.textContent = 'Loaded from source string.'; return; }
+    var raw = $('#val').value.trim();
+    if (!raw) { note.textContent = 'Enter something to load.'; return; }
+    if (mode === 'url') {
+      var u;
+      try { u = new URL(/^[a-z]+:/i.test(raw) ? raw : 'https://' + raw); } catch (e) { note.textContent = 'That is not a valid URL.'; return; }
+      if (!/^https?:$/.test(u.protocol)) { note.textContent = 'Only http and https URLs can be framed.'; return; }
+      f.src = u.href; last = { m: 'url', u: u.href };
+      note.textContent = 'Loading ' + u.hostname + '…';
+      timer = setTimeout(function () {
+        note.textContent = 'If the frame is blank, ' + u.hostname + ' likely blocks framing (X-Frame-Options or CSP frame-ancestors). Browsers do not report this to the page.';
+      }, 5000);
+      f.onload = function () { clearTimeout(timer); note.textContent = 'Frame loaded. If it looks blank, the site may block framing.'; };
+    } else {
+      note.textContent = 'Fetching…';
+      try {
+        var r = await Octo.fetchText(raw, function (c) { note.textContent = 'Trying ' + c.name + '…'; });
+        f.srcdoc = Octo.srcdoc(r.text, r.url); last = { m: 'repo', html: Octo.srcdoc(r.text, r.url) };
+        note.textContent = 'Loaded via ' + r.cdn.name + '.';
+      } catch (e) { note.textContent = e.message; }
+    }
+  }
+
+  document.querySelectorAll('.modes button').forEach(function (b) { b.onclick = function () { setMode(b.dataset.m); }; });
+  Octo.mount($('#cdn'));
+  $('#load').onclick = load;
+  $('#reload').onclick = load;
+  $('#val').addEventListener('keydown', function (e) { if (e.key === 'Enter') load(); });
+  $('#size').onchange = resize;
+  $('#opts').onchange = sandbox;
+  $('#full').onclick = function () { var f = $('#f'); (f.requestFullscreen || f.webkitRequestFullscreen || function () {}).call(f); };
+  $('#tab').onclick = function () {
+    if (!last) return;
+    if (last.m === 'url') window.open(last.u, '_blank', 'noopener');
+    else window.open(URL.createObjectURL(new Blob([last.m === 'src' ? $('#srcv').value : last.html], { type: 'text/html' })), '_blank');
+  };
+  resize(); sandbox();
+})();
+</script>
+</body>
+</html>
