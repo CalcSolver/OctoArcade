@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Octo Arcade</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--panel:#21262d;--panel2:#161b22;--line:#30363d;--ink:#c9d1d9;--muted:#8b949e;--accent:#238636;--min:190px;font-family:"Chakra Petch","Segoe UI",system-ui,sans-serif}
+html[data-theme=light]{--bg:#e8f2ff;--panel:#fff;--panel2:#eef5ff;--line:#cfe0f5;--ink:#0b2545;--muted:#5b7390;--accent:#1a8cff}
+*{box-sizing:border-box}a{color:inherit}[hidden]{display:none!important}
+body{margin:0;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink)}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+button,select,input{font:inherit;color:var(--ink)}
+.btn{padding:8px 14px;font-weight:600;line-height:1.2;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+.btn:hover{border-color:var(--accent)}.btn.on,.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+header{position:sticky;top:0;z-index:5;background:var(--panel2);border-bottom:2px solid var(--accent)}
+.bar{max-width:1320px;margin:0 auto;padding:12px 22px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.logo{font-size:1.7rem;font-weight:700;letter-spacing:-.01em;margin-right:auto;cursor:pointer}.logo span{color:var(--accent)}
+.search{flex:1 1 220px;max-width:420px}
+.search input{width:100%;padding:10px 16px;background:var(--panel);border:1px solid var(--line);border-radius:999px}
+main{flex:1;width:100%;max-width:1320px;margin:0 auto;padding:20px 22px 40px}
+.head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}h1{margin:0;font-size:1.5rem}#count{color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px}
+.chip{flex:none;padding:7px 16px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);color:var(--muted);cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--min),1fr));gap:18px}
+@media(max-width:600px){.bar{padding:10px 14px}main{padding:16px 14px 32px}.grid{gap:12px}}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;min-width:0;transition:transform .15s,box-shadow .15s,border-color .15s}
+.card:hover,.card:focus-visible{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 26px rgba(0,0,0,.45)}
+.pill{position:absolute;left:10px;bottom:10px;z-index:2;padding:5px 14px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;font-size:.85rem;opacity:0;transform:translateY(4px);transition:.15s;pointer-events:none}
+.card:hover .pill,.card:focus-visible .pill{opacity:1;transform:none}
+.thumb{position:relative;aspect-ratio:16/11;display:grid;place-items:center;background:linear-gradient(135deg,var(--panel),var(--panel2));font-size:3.6rem;font-weight:700;color:rgba(255,255,255,.4);overflow:hidden}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.meta{padding:10px 12px 12px}.meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.meta small{color:var(--muted)}
+.like{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;z-index:2}
+.like svg{width:18px;height:18px;fill:currentColor}
+.like.on{background:#da3633}
+.like:hover{background:rgba(0,0,0,.8)}.like.on:hover{background:#f04b48}
+.status{text-align:center;padding:60px 10px;color:var(--muted)}.status .btn{margin-top:14px}
+.more{display:block;margin:24px auto 0}
+footer{padding:16px;text-align:center;color:var(--muted);background:var(--panel2);border-top:1px solid var(--line)}
+.overlay{position:fixed;inset:0;z-index:10;background:rgba(5,6,9,.96);display:flex;flex-direction:column;padding:10px}
+#player{background:#05060a}
+.pbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:10px;color:#fff}
+.pbar h2{margin:0;font-size:1.15rem;flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#via{color:#9aa4b2;font-size:.85rem}
+#frame{flex:1;width:100%;border:1px solid var(--line);border-radius:8px;background:#000}
+.dlg{margin:auto;width:100%;max-width:520px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.dlg h2{margin:0 0 8px}.row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+.row small{display:block;color:var(--muted)}.seg{display:flex;gap:6px}
+select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="bar">
+  <div class="logo" id="logo">Octo <span>Arcade</span></div>
+  <div class="search"><input id="q" type="search" placeholder="Search games" aria-label="Search games" autocomplete="off"></div>
+  <a class="btn" id="moviesLink" href="movies.html" hidden>Movies</a>
+  <a class="btn" id="musicLink" href="musicplayer.html" hidden>Music</a>
+  <a class="btn" id="romsLink" href="roms.html" hidden>ROMs</a>
+  <a class="btn" href="html-tester.html">HTML tester</a>
+  <a class="btn" href="iframe-tester.html">Iframe tester</a>
+  <button class="btn" id="settingsBtn">Settings</button>
+</div></header>
+
+<main>
+  <div class="head"><h1 id="title">All games</h1><span id="count"></span></div>
+  <div class="chips" id="chips"></div>
+  <div id="status" class="status">Loading games…</div>
+  <div id="grid" class="grid" hidden></div>
+  <button class="btn more" id="more" hidden>Show more</button>
+</main>
+<footer>Octo Arcade - free online games</footer>
+
+<div id="player" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ptitle">
+  <div class="pbar">
+    <h2 id="ptitle"></h2><span id="via"></span>
+    <select id="cdnPlayer" aria-label="Content source"></select>
+    <button class="btn" id="reload">Reload</button>
+    <button class="btn" id="copy">Copy link</button>
+    <button class="btn" id="full">Fullscreen</button>
+    <button class="btn primary" id="close">Close</button>
+  </div>
+  <iframe id="frame" title="Game" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
+</div>
+
+<div id="settings" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="stitle">
+  <div class="dlg">
+    <h2 id="stitle">Settings</h2>
+    <div class="row"><div><b>Theme</b></div><div class="seg" id="themeSeg"><button class="btn" data-v="dark">Dark</button><button class="btn" data-v="light">Light</button></div></div>
+    <div class="row"><div><b>Tile size</b></div><div class="seg" id="sizeSeg"><button class="btn" data-v="150">Small</button><button class="btn" data-v="190">Medium</button><button class="btn" data-v="250">Large</button></div></div>
+    <div class="row"><div><b>Content source</b><small>Auto tries the next source if one fails or is blocked.</small></div><select id="cdnSet" aria-label="Content source"></select></div>
+    <div class="row"><div><b>Panic key</b><small>Jumps away instantly. Click, then press a key or combo.</small></div><button class="btn" id="keyBtn"></button></div>
+    <div class="row"><div><b>Panic key on</b></div><input type="checkbox" id="hotkey"></div>
+    <div class="row"><div><b>Reload game list</b><small>Fetch the newest games now.</small></div><button class="btn" id="refresh">Reload</button></div>
+    <div class="row"><div><b>Likes and recent</b></div><button class="btn" id="clear">Clear</button></div>
+    <div class="row"><span></span><button class="btn primary" id="sclose">Done</button></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var OWNER = "CalcSolver", REPO = "OctoArcade", BRANCH = "main", PANIC_URL = "https://students.aquinas.wa.edu.au/";
+  var NPM_PKG = ""; // set to an npm package that mirrors this repo to enable unpkg
+  var $ = function (s) { return document.querySelector(s); };
+  var ls = {
+    get: function (k, d) { try { var v = localStorage.getItem("octo:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem("octo:" + k, JSON.stringify(v)); } catch (e) {} }
+  };
+
+  /* ---------- Multi-CDN failover. Auto order = Pages, jsDelivr, Fastly, Gcore, GitHub raw ---------- */
+  var enc = function (p) { return p.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/"); };
+  var jsd = function (h) { return function (p) { return "https://" + h + "/gh/" + OWNER + "/" + REPO + "@" + BRANCH + "/" + enc(p); }; };
+  var CDNS = [
+    { id: "pages", name: "GitHub Pages", direct: true, re: /\.github\.io\//, url: function (p) { return "https://" + OWNER.toLowerCase() + ".github.io/" + REPO + "/" + enc(p); } },
+    { id: "jsdelivr", name: "jsDelivr", re: /\/\/cdn\.jsdelivr\.net\//, url: jsd("cdn.jsdelivr.net") },
+    { id: "fastly", name: "jsDelivr (Fastly)", re: /\/\/fastly\.jsdelivr\.net\//, url: jsd("fastly.jsdelivr.net") },
+    { id: "gcore", name: "jsDelivr (Gcore)", re: /\/\/gcore\.jsdelivr\.net\//, url: jsd("gcore.jsdelivr.net") },
+    { id: "raw", name: "GitHub raw", re: /raw\.githubusercontent\.com\//, url: function (p) { return "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + enc(p); } },
+    { id: "unpkg", name: "unpkg (npm)", re: /\/\/unpkg\.com\//, url: function (p) { return NPM_PKG ? "https://unpkg.com/" + NPM_PKG + "/" + enc(p) : null; } }
+  ].filter(function (c) { return c.id !== "unpkg" || NPM_PKG; });
+  var cdnOf = function (u) { return CDNS.filter(function (c) { return c.re.test(u); })[0] || { name: "CDN" }; };
+  function candidates(path) {
+    var list = CDNS.map(function (c) { return c.url(path); }), pref = ls.get("cdnPref", "");
+    var first = list.filter(function (u) { return pref && cdnOf(u).id === pref; });
+    return first.concat(list.filter(function (u) { return first.indexOf(u) < 0; }));
+  }
+  async function fetchOne(u, ms) {
+    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, ms || 8000);
+    try {
+      var r = await fetch(u, { signal: ctl.signal });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return { url: u, cdn: cdnOf(u), text: await r.text() };
+    } finally { clearTimeout(t); }
+  }
+  function injectBase(html, url) {
+    var tag = '<base href="' + url.replace(/[^\/]*$/, "") + '">';
+    return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + tag; }) : tag + html;
+  }
+  function mountSelect(sel) {
+    sel.innerHTML = "";
+    [["", "Source: Auto"]].concat(CDNS.map(function (c) { return [c.id, c.name]; })).forEach(function (p) {
+      var o = document.createElement("option"); o.value = p[0]; o.textContent = p[1]; sel.appendChild(o);
+    });
+    sel.value = ls.get("cdnPref", "");
+    sel.onchange = function () {
+      ls.set("cdnPref", sel.value);
+      [$("#cdnPlayer"), $("#cdnSet")].forEach(function (s) { s.value = sel.value; });
+      if (current && !$("#player").hidden) play(current);
+    };
+  }
+
+  /* ---------- Games ---------- */
+  var CATS = [
+    ["Horror", /horror|fnaf|nights|backroom|scary|haunt|ghost|granny|baldi|slender|nightmare|creep|asylum|mansion|evil|dead|zombie|poppy|huggy|bendy|spooky|cursed|terror|scp|doll|siren/],
+    ["Shooter", /shoot|gun|sniper|strike|bullet|warfare|1942|metalslug|krunker|1v1|tank|commando|army|battle|fps|rooftop|mayhem|bowmaster|csgo|counter/],
+    ["Fighting", /mortal|kombat|fight|brawl|smash|karate|tekken|wwe|stickwar|boxing|ninja|ragdoll|dragonfist|dragonball|devolution|ufc|mma|wrestl/],
+    ["Sports", /soccer|football|basket|baseball|golf|tennis|hockey|nba|fifa|pool|billiard|bowling|skate|sport|volley|cricket|rugby|olymp|penalty|dunk|madden|nfl|ncaa|swim|darts|fishing|snowboard|goal/],
+    ["Strategy & Tycoon", /idle|clicker|cookie|tycoon|empire|tower|defen[cs]e|bloons|civil|strategy|mart|money|simulator|farm|shop|store|restaurant|bank|business|cafe|bakery|papa|diner|cooking|hotel|rts|clash|feudal/],
+    ["Platformer", /obby|parkour|mario|platform|jump|run|sonic|geometry|dash|fireboy|watergirl|climb|flappy|slope|bounce|fly|temple|surfers|jetpack|cube/],
+    ["Racing", /race|racing|racer|drift|car(?![deprt])|drive|truck|moto|speed|rally|kart|bike|bmx|cycle|road|parking|traffic|burnout|earntodie|offroad|stunt|taxi|jeep|hillclimb/],
+    ["Adventure", /among|impostor|survival|craft|terraria|rpg|dungeon|knight|sword|zelda|pokemon|escape|story|quest|legend|hero|kingdom|island|adventure|wizard|castle|isaac|portal|metroid|castlevania|mystery|detective/],
+    ["Puzzle", /puzzle|2048|sudoku|tetris|chess|minesweeper|word|jigsaw|bubble|solitaire|mahjong|checkers|connect|memory|maze|brain|logic|tile|merge|bejeweled|sort|riddle|quiz|blox|candy|jewel|gem|stack|pipe|sokoban|unblock|physics/],
+    ["Retro & Arcade", /pacman|snake|pong|invader|breakout|arcade|retro|galaga|frogger|asteroid|emulator|atari|donkey|contra|kirby|qbert/]
+  ];
+  var PAGE = 60, IMG = /\.(png|jpe?g|gif|webp|svg|ico|avif|bmp)$/i, SKIP = /^(index|readme)\.html?$/i;
+  var base = function (f) { return f.replace(/\.[^.]+$/, ""); };
+  var pretty = function (f) { return base(f).replace(/[-_]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, function (c) { return c.toUpperCase(); }); };
+
+  var set = Object.assign({ theme: "dark", size: 190, hotkey: true, keys: ["`"] }, ls.get("settings2", {}));
+  if (set.theme !== "light") set.theme = "dark";
+  set.size = parseInt(set.size, 10) || 190;
+  var games = [], byKey = {}, icons = {}, view = "all", q = "", shown = PAGE, current = null, token = 0;
+  var votes = ls.get("votes", {}), recent = ls.get("recent", []);
+  function saveSet() { ls.set("settings2", Object.assign(ls.get("settings2", {}), set)); }
+
+  async function loadList(force) {
+    var cached = !force && ls.get("files2", null);
+    if (cached && Date.now() - cached.t < 1800e3) return cached.files;
+    var files, old = ls.get("files2", null);
+    try {
+      var r = await fetchOne("https://api.github.com/repos/" + OWNER + "/" + REPO + "/git/trees/" + BRANCH + "?recursive=1", 10000);
+      files = JSON.parse(r.text).tree.filter(function (t) { return t.type === "blob"; }).map(function (t) { return t.path; });
+    } catch (e) { // GitHub API limited or blocked: use jsDelivr's file index, then the last saved list
+      try {
+        var j = await fetchOne("https://data.jsdelivr.com/v1/packages/gh/" + OWNER + "/" + REPO + "@" + BRANCH + "?structure=flat", 10000);
+        files = JSON.parse(j.text).files.map(function (f) { return f.name.replace(/^\//, ""); });
+      } catch (e2) { if (old) return old.files; throw e2; }
+    }
+    ls.set("files2", { t: Date.now(), files: files });
+    return files;
+  }
+  function build(files) {
+    icons = {};
+    files.forEach(function (f) { if (/^icons?\//i.test(f) && IMG.test(f)) icons[base(f.split("/").pop()).toLowerCase()] = f; });
+    games = files.filter(function (f) { return /^Games\/.+\.html?$/i.test(f) && !SKIP.test(f.split("/").pop()); }).map(function (f) {
+      var file = f.split("/").pop(), id = base(file).toLowerCase(), hit = CATS.filter(function (c) { return c[1].test(id); })[0];
+      return { key: f, name: pretty(file), id: id, cat: hit ? hit[0] : "More Games" };
+    }).sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true }); });
+    byKey = {}; games.forEach(function (g) { byKey[g.key] = g; });
+    [["#moviesLink", "movies.html"], ["#musicLink", "musicplayer.html"], ["#romsLink", "roms.html"]].forEach(function (p) { $(p[0]).hidden = files.indexOf(p[1]) < 0; });
+  }
+
+  /* ---------- Rendering ---------- */
+  function cats() {
+    var found = games.map(function (g) { return g.cat; }), order = CATS.map(function (c) { return c[0]; }).concat("More Games");
+    return order.filter(function (c, i) { return found.indexOf(c) > -1; });
+  }
+  function list() {
+    var t = q.toLowerCase();
+    if (t) return games.filter(function (g) { return g.name.toLowerCase().indexOf(t) > -1; });
+    if (view === "liked") return games.filter(function (g) { return votes[g.key] === 1; });
+    if (view === "recent") return recent.map(function (k) { return byKey[k]; }).filter(Boolean);
+    if (view === "all") return games;
+    return games.filter(function (g) { return g.cat === view; });
+  }
+  function chips() {
+    var defs = [["all", "All"]].concat(cats().map(function (c) { return [c, c]; }), [["liked", "Liked"], ["recent", "Recent"]]);
+    $("#chips").innerHTML = "";
+    defs.forEach(function (d) {
+      var b = document.createElement("button");
+      b.className = "chip" + (view === d[0] && !q ? " on" : ""); b.textContent = d[1];
+      b.onclick = function () { view = d[0]; q = ""; $("#q").value = ""; shown = PAGE; render(); };
+      $("#chips").appendChild(b);
+    });
+  }
+  function thumb(box, g) {
+    var path = icons[g.id]; if (!path) return;
+    var urls = candidates(path), img = new Image();
+    img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
+    img.onerror = function () { if (urls.length) img.src = urls.shift(); else img.remove(); };
+    img.src = urls.shift(); box.appendChild(img);
+  }
+  function tint(el, name) {
+    var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    el.style.background = "linear-gradient(135deg,hsl(" + h + " 55% 32%),hsl(" + ((h + 50) % 360) + " 60% 16%))";
+  }
+  function card(g) {
+    var c = document.createElement("article"); c.className = "card"; c.tabIndex = 0;
+    var t = document.createElement("div"); t.className = "thumb"; t.textContent = g.name.charAt(0); tint(t, g.name); thumb(t, g);
+    var like = document.createElement("button"); like.className = "like" + (votes[g.key] === 1 ? " on" : "");
+    like.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'; like.setAttribute("aria-label", "Like " + g.name);
+    like.onclick = function (e) { e.stopPropagation(); if (votes[g.key] === 1) delete votes[g.key]; else votes[g.key] = 1; ls.set("votes", votes); like.classList.toggle("on", votes[g.key] === 1); if (view === "liked") render(); };
+    var m = document.createElement("div"); m.className = "meta";
+    var b = document.createElement("b"); b.textContent = g.name; b.title = g.name;
+    var s = document.createElement("small"); s.textContent = g.cat;
+    var pill = document.createElement("span"); pill.className = "pill"; pill.textContent = "\u25B6 Play";
+    m.append(b, s); t.append(like, pill); c.append(t, m);
+    c.onclick = function () { play(g); };
+    c.onkeydown = function (e) { if (e.key === "Enter") play(g); };
+    return c;
+  }
+  function render() {
+    chips();
+    var items = list(), grid = $("#grid");
+    $("#title").textContent = q ? "Search results" : view === "all" ? "All games" : view === "liked" ? "Liked games" : view === "recent" ? "Recently played" : view;
+    $("#count").textContent = items.length + (items.length === 1 ? " game" : " games");
+    grid.innerHTML = "";
+    $("#status").hidden = items.length > 0; grid.hidden = !items.length;
+    if (!items.length) $("#status").textContent = q ? "No games match that search." : view === "liked" ? "No liked games yet. Tap the heart on a game." : view === "recent" ? "Nothing played yet." : "No games found.";
+    items.slice(0, shown).forEach(function (g) { grid.appendChild(card(g)); });
+    $("#more").hidden = items.length <= shown;
+  }
+
+  /* ---------- Player with automatic CDN failover ---------- */
+  async function play(g) {
+    current = g; var my = ++token, via = $("#via"), frame = $("#frame"), errs = [];
+    $("#ptitle").textContent = g.name; $("#player").hidden = false; document.body.style.overflow = "hidden";
+    recent = [g.key].concat(recent.filter(function (k) { return k !== g.key; })).slice(0, 24); ls.set("recent", recent);
+    try { history.replaceState(null, "", "#play=" + encodeURIComponent(g.key)); } catch (e) {}
+    frame.removeAttribute("srcdoc"); frame.src = "about:blank";
+    var urls = candidates(g.key);
+    for (var i = 0; i < urls.length; i++) {
+      var cdn = cdnOf(urls[i]);
+      via.textContent = "Trying " + cdn.name + "\u2026";
+      try {
+        var doc = await fetchOne(urls[i]);
+        if (my !== token) return;
+        if (cdn.direct) { frame.removeAttribute("srcdoc"); frame.src = doc.url; } // GitHub Pages serves real HTML
+        else frame.srcdoc = injectBase(doc.text, doc.url);                       // other CDNs: run it from text, assets resolve via <base>
+        via.textContent = "via " + cdn.name; return;
+      } catch (e) { errs.push(cdn.name + ": " + (e.name === "AbortError" ? "timed out" : e.message)); }
+    }
+    if (my === token) via.textContent = "Couldn't load from any source (" + errs.join(", ") + ")";
+  }
+  function closePlayer() {
+    token++; current = null; $("#player").hidden = true; document.body.style.overflow = "";
+    var f = $("#frame"); f.removeAttribute("srcdoc"); f.src = "about:blank";
+    if (document.fullscreenElement) document.exitFullscreen();
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
+    if (view === "recent") render();
+  }
+
+  /* ---------- Settings, panic key ---------- */
+  function applySet() {
+    document.documentElement.dataset.theme = set.theme;
+    document.documentElement.style.setProperty("--min", set.size + "px");
+    document.querySelectorAll("#themeSeg .btn").forEach(function (b) { b.classList.toggle("on", b.dataset.v === set.theme); });
+    document.querySelectorAll("#sizeSeg .btn").forEach(function (b) { b.classList.toggle("on", +b.dataset.v === set.size); });
+    $("#keyBtn").textContent = (set.keys && set.keys[0]) || "`"; $("#hotkey").checked = !!set.hotkey;
+    saveSet();
+  }
+  function combo(e) {
+    if (["Control", "Shift", "Alt", "Meta"].indexOf(e.key) > -1) return null;
+    var k = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3) : e.key === " " ? "Space" : e.key.length === 1 ? e.key.toUpperCase() : e.key;
+    return [e.ctrlKey && "Ctrl", e.altKey && "Alt", e.shiftKey && "Shift", e.metaKey && "Meta", k].filter(Boolean).join("+");
+  }
+  var recording = false;
+  document.addEventListener("keydown", function (e) {
+    if (recording) { e.preventDefault(); var c = combo(e); if (!c) return; recording = false; if (c !== "Escape") set.keys = [c]; applySet(); return; }
+    if (e.key === "Escape") { if (!$("#settings").hidden) $("#settings").hidden = true; else if (!$("#player").hidden) closePlayer(); return; }
+    var c2 = combo(e), typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+    if (c2 && set.hotkey && set.keys.indexOf(c2) > -1 && !(typing && !/Ctrl|Alt|Meta/.test(c2))) {
+      $("#frame").src = "about:blank";
+      try { window.top.location.replace(PANIC_URL); } catch (err) { location.replace(PANIC_URL); }
+    }
+  });
+
+  /* ---------- Wiring ---------- */
+  $("#q").addEventListener("input", function (e) { q = e.target.value.trim(); shown = PAGE; render(); });
+  $("#more").onclick = function () { shown += PAGE; render(); };
+  $("#logo").onclick = function () { view = "all"; q = ""; $("#q").value = ""; shown = PAGE; render(); };
+  $("#close").onclick = closePlayer;
+  $("#reload").onclick = function () { if (current) play(current); };
+  $("#full").onclick = function () { var f = $("#frame"); (f.requestFullscreen || f.webkitRequestFullscreen).call(f); };
+  $("#copy").onclick = function () { var b = $("#copy"); try { navigator.clipboard.writeText(location.href); } catch (e) {} b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy link"; }, 1500); };
+  $("#settingsBtn").onclick = function () { $("#settings").hidden = false; };
+  $("#sclose").onclick = function () { $("#settings").hidden = true; };
+  $("#themeSeg").onclick = function (e) { if (e.target.dataset.v) { set.theme = e.target.dataset.v; applySet(); } };
+  $("#sizeSeg").onclick = function (e) { if (e.target.dataset.v) { set.size = +e.target.dataset.v; applySet(); } };
+  $("#hotkey").onchange = function (e) { set.hotkey = e.target.checked; applySet(); };
+  $("#keyBtn").onclick = function () { recording = true; $("#keyBtn").textContent = "Press a key\u2026"; };
+  $("#clear").onclick = function () { votes = {}; recent = []; ls.set("votes", votes); ls.set("recent", recent); render(); };
+  $("#refresh").onclick = function () { init(true); };
+  mountSelect($("#cdnPlayer")); mountSelect($("#cdnSet"));
+
+  async function init(force) {
+    $("#status").hidden = false; $("#grid").hidden = true; $("#status").textContent = "Loading games\u2026";
+    try {
+      build(await loadList(force)); render();
+      var m = location.hash.match(/^#play=(.+)/);
+      if (m && byKey[decodeURIComponent(m[1])]) play(byKey[decodeURIComponent(m[1])]);
+    } catch (e) {
+      $("#status").innerHTML = "";
+      $("#status").append("Couldn't load the game list (" + e.message + "). You may be offline or rate-limited. ");
+      var b = document.createElement("button"); b.className = "btn"; b.textContent = "Try again"; b.onclick = function () { init(true); };
+      $("#status").append(document.createElement("br"), b);
+    }
+  }
+  window.addEventListener("error", function (e) { var st = $("#status"); st.hidden = false; st.textContent = "Something broke: " + e.message; });
+  applySet();
+  init();
+})();
+</script>
+</body>
+</html>
