@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Octo Music - Multi-Node Edition</title>
+  <title>Octo Music - Firebase Cloud</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -31,7 +31,8 @@
     .nav-item:hover, .nav-item.active { color: var(--text-main); }
 
     .sidebar-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
-    .action-btn { width: 100%; padding: 10px; border-radius: 20px; border: none; background: var(--primary); color: #000; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+    .action-btn { width: 100%; padding: 10px; border-radius: 20px; border: none; background: var(--primary); color: #000; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
     .action-btn:hover { opacity: 0.9; }
 
     .user-playlists-section h4 { font-size: 11px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
@@ -50,6 +51,10 @@
     .hero-banner h1 { font-size: 32px; font-weight: 800; margin-bottom: 6px; }
     .hero-banner p { color: var(--text-sub); margin-bottom: 24px; }
 
+    /* Upload Panel */
+    .upload-panel { background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
+    .upload-panel input { padding: 8px 12px; background: var(--bg-base); border: 1px solid var(--border-color); color: #fff; border-radius: 4px; }
+
     /* Track Grid */
     .track-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
     .track-card { background: var(--bg-surface); padding: 16px; border-radius: 8px; cursor: pointer; transition: background 0.2s; position: relative; }
@@ -60,10 +65,6 @@
     
     .play-btn-overlay { position: absolute; right: 12px; bottom: 12px; width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; opacity: 0; transform: translateY(8px); transition: all 0.2s; }
     .track-card:hover .play-btn-overlay { opacity: 1; transform: translateY(0); }
-
-    .add-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: 0.2s; z-index: 5; }
-    .track-card:hover .add-btn { opacity: 1; }
-    .add-btn:hover { background: var(--primary); color: #000; }
 
     .card-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
     .card-artist { font-size: 12px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -92,33 +93,33 @@
 
   <div class="app-container">
     <aside class="sidebar">
-      <div class="brand"><i class="fa-solid fa-compact-disc"></i> Octo Music</div>
+      <div class="brand"><i class="fa-solid fa-compact-disc"></i> Octo Cloud</div>
       <ul class="nav-list">
-        <li class="nav-item active" id="navHome"><i class="fa-solid fa-house"></i> Home</li>
+        <li class="nav-item active" id="navHome"><i class="fa-solid fa-house"></i> Firebase Cloud</li>
       </ul>
       <div class="sidebar-divider"></div>
-      <button class="action-btn" id="createPlaylistBtn"><i class="fa-solid fa-plus"></i> New Playlist</button>
-      <div class="user-playlists-section" style="margin-top: 15px;">
-        <h4>Your Playlists</h4>
-        <ul class="playlist-list" id="playlistList"></ul>
-      </div>
+      <button class="action-btn" id="toggleUploadBtn"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Track</button>
     </aside>
 
     <main class="main-content">
-      <div class="top-bar">
-        <div class="search-box">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" placeholder="Search mainstream songs..." />
-        </div>
+      <div class="hero-banner">
+        <h1 id="feedTitle">Your Firebase Library</h1>
+        <p>Private cloud music hosted on Firebase Storage</p>
       </div>
 
-      <div class="hero-banner">
-        <h1 id="feedTitle">Top Hits</h1>
-        <p>Search mainstream tracks with multi-node API failover</p>
+      <!-- Upload Interface -->
+      <div class="upload-panel" id="uploadPanel" style="display: none;">
+        <h3>Upload Track to Firebase</h3>
+        <input type="text" id="songTitleInput" placeholder="Song Title (e.g. Thriller)" />
+        <input type="text" id="songArtistInput" placeholder="Artist Name (e.g. Michael Jackson)" />
+        <label style="font-size: 12px; color: var(--text-sub);">Select MP3 File:</label>
+        <input type="file" id="mp3FileInput" accept="audio/mp3,audio/*" />
+        <button class="action-btn" id="startUploadBtn" style="width: 150px; margin-top: 8px;">Upload Now</button>
+        <div id="uploadStatus" style="font-size: 12px; color: var(--primary);"></div>
       </div>
 
       <div class="track-grid" id="trackGrid">
-        <div class="state-msg">Loading music library...</div>
+        <div class="state-msg">Connecting to Firebase...</div>
       </div>
     </main>
   </div>
@@ -149,23 +150,31 @@
 
   <audio id="audioEngine"></audio>
 
-  <script>
-    // List of multiple public fallback instances to prevent rate limits
-    const NODES = [
-      'https://vid.puffyan.us',
-      'https://invidious.privacy.gd',
-      'https://inv.nadeko.net'
-    ];
+  <!-- Firebase SDK Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-    let userPlaylists = JSON.parse(localStorage.getItem('octo_playlists') || '{"Favorites": []}');
-    let activePlaylist = null;
-    let currentTracks = [];
+    // Your Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyASgXoiJqaGCciVZq4CnL9OaV_XOS_aNQw",
+      authDomain: "music-player-c2d3e.firebaseapp.com",
+      projectId: "music-player-c2d3e",
+      storageBucket: "music-player-c2d3e.firebasestorage.app",
+      messagingSenderId: "878608863769",
+      appId: "1:878608863769:web:87c77ea56c53eb6bbf5088",
+      measurementId: "G-7E2ES2Q7EZ"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+
+    let cloudTracks = [];
     let currentIndex = -1;
     let isPlaying = false;
 
     const audio = document.getElementById('audioEngine');
     const trackGrid = document.getElementById('trackGrid');
-    const searchInput = document.getElementById('searchInput');
     const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
     const currTitle = document.getElementById('currTitle');
@@ -173,114 +182,92 @@
     const currImg = document.getElementById('currImg');
     const progressFill = document.getElementById('progressFill');
     const progressBar = document.getElementById('progressBar');
-    const playlistList = document.getElementById('playlistList');
+    const uploadPanel = document.getElementById('uploadPanel');
+    const uploadStatus = document.getElementById('uploadStatus');
 
-    function savePlaylists() {
-      localStorage.setItem('octo_playlists', JSON.stringify(userPlaylists));
-      renderPlaylists();
-    }
+    // Load songs from Firebase Storage
+    async function loadFirebaseTracks() {
+      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Fetching files from Firebase Storage...</div>';
+      
+      try {
+        const listRef = ref(storage, 'songs/');
+        const res = await listAll(listRef);
 
-    function renderPlaylists() {
-      playlistList.innerHTML = '';
-      Object.keys(userPlaylists).forEach(name => {
-        const li = document.createElement('li');
-        li.className = `playlist-item ${activePlaylist === name ? 'active' : ''}`;
-        li.textContent = `${name} (${userPlaylists[name].length})`;
-        li.onclick = () => openPlaylist(name);
-        playlistList.appendChild(li);
-      });
-    }
-
-    async function fetchMusic(query = 'Top Hits 2026') {
-      activePlaylist = null;
-      renderPlaylists();
-      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Connecting to music nodes...</div>';
-
-      let data = null;
-      let workingNode = '';
-
-      // Automatically rotate through nodes if one fails or rate limits
-      for (const node of NODES) {
-        try {
-          const res = await fetch(`${node}/api/v1/search?q=${encodeURIComponent(query)}&type=video`);
-          if (res.ok) {
-            data = await res.json();
-            workingNode = node;
-            break;
-          }
-        } catch (e) {
-          console.warn(`Node ${node} failed, trying next...`);
+        if (res.items.length === 0) {
+          trackGrid.innerHTML = '<div class="state-msg">Your Firebase storage is empty!<br>Click "Upload Track" in the sidebar to add your first MP3 file.</div>';
+          return;
         }
-      }
 
-      if (data && data.length > 0) {
-        currentTracks = data.map(item => ({
-          title: item.title,
-          artist: item.author,
-          cover: item.videoThumbnails && item.videoThumbnails[0] ? item.videoThumbnails[0].url : '',
-          audio: `${workingNode}/latest_version?id=${item.videoId}&itag=140`
-        })).filter(t => t.cover);
+        cloudTracks = [];
+        for (const itemRef of res.items) {
+          const url = await getDownloadURL(itemRef);
+          const rawName = itemRef.name.replace(/\.[^/.]+$/, "");
+          const parts = rawName.split(' - ');
+          
+          cloudTracks.push({
+            title: parts[1] || parts[0],
+            artist: parts[1] ? parts[0] : 'Cloud Upload',
+            cover: 'https://via.placeholder.com/300/181818/ffffff?text=Firebase+Audio',
+            audio: url
+          });
+        }
 
-        renderGrid(currentTracks);
-      } else {
-        trackGrid.innerHTML = '<div class="state-msg">All nodes busy or rate limited. Try searching again in a moment!</div>';
+        renderGrid();
+      } catch (err) {
+        console.error(err);
+        trackGrid.innerHTML = '<div class="state-msg">Error loading from Firebase. Ensure Storage Rules are set to Public read/write.</div>';
       }
     }
 
-    function openPlaylist(name) {
-      activePlaylist = name;
-      renderPlaylists();
-      currentTracks = userPlaylists[name] || [];
-      document.getElementById('feedTitle').textContent = name;
-      renderGrid(currentTracks);
-    }
+    // Upload MP3 to Firebase Storage
+    document.getElementById('startUploadBtn').onclick = async () => {
+      const fileInput = document.getElementById('mp3FileInput');
+      const titleInput = document.getElementById('songTitleInput').value.trim();
+      const artistInput = document.getElementById('songArtistInput').value.trim();
 
-    function renderGrid(tracks) {
-      trackGrid.innerHTML = '';
-      if (tracks.length === 0) {
-        trackGrid.innerHTML = '<div class="state-msg">No tracks found.</div>';
+      if (!fileInput.files[0]) {
+        alert('Please select an MP3 file first!');
         return;
       }
 
-      tracks.forEach((track, index) => {
+      const file = fileInput.files[0];
+      const filename = `${artistInput || 'Unknown'} - ${titleInput || file.name}`;
+      const songRef = ref(storage, `songs/${filename}`);
+
+      uploadStatus.textContent = 'Uploading to Firebase...';
+
+      try {
+        await uploadBytes(songRef, file);
+        uploadStatus.textContent = 'Upload complete!';
+        uploadPanel.style.display = 'none';
+        loadFirebaseTracks();
+      } catch (err) {
+        console.error(err);
+        uploadStatus.textContent = 'Upload failed. Check Firebase Storage rules.';
+      }
+    };
+
+    function renderGrid() {
+      trackGrid.innerHTML = '';
+      cloudTracks.forEach((track, index) => {
         const card = document.createElement('div');
         card.className = 'track-card';
         card.innerHTML = `
-          <button class="add-btn" title="Add to Playlist"><i class="fa-solid fa-plus"></i></button>
           <div class="card-img-wrap">
-            <img src="${track.cover}" loading="lazy" />
+            <img src="${track.cover}" />
             <div class="play-btn-overlay"><i class="fa-solid fa-play"></i></div>
           </div>
           <div class="card-title">${track.title}</div>
           <div class="card-artist">${track.artist}</div>
         `;
-
-        card.onclick = (e) => {
-          if (!e.target.closest('.add-btn')) playTrack(index);
-        };
-
-        card.querySelector('.add-btn').onclick = (e) => {
-          e.stopPropagation();
-          addToPlaylist(track);
-        };
-
+        card.onclick = () => playTrack(index);
         trackGrid.appendChild(card);
       });
     }
 
-    function addToPlaylist(track) {
-      const names = Object.keys(userPlaylists);
-      const target = prompt(`Add to which playlist?\n- ` + names.join('\n- '), names[0]);
-      if (target && userPlaylists[target]) {
-        userPlaylists[target].push(track);
-        savePlaylists();
-        alert(`Added "${track.title}" to ${target}!`);
-      }
-    }
-
     function playTrack(index) {
       currentIndex = index;
-      const track = currentTracks[currentIndex];
+      const track = cloudTracks[currentIndex];
       audio.src = track.audio;
       audio.play();
       isPlaying = true;
@@ -291,7 +278,7 @@
     }
 
     playBtn.onclick = () => {
-      if (!audio.src && currentTracks.length > 0) { playTrack(0); return; }
+      if (!audio.src && cloudTracks.length > 0) { playTrack(0); return; }
       if (isPlaying) {
         audio.pause();
         playIcon.className = "fa-solid fa-play";
@@ -303,7 +290,7 @@
     };
 
     document.getElementById('prevBtn').onclick = () => { if (currentIndex > 0) playTrack(currentIndex - 1); };
-    document.getElementById('nextBtn').onclick = () => { if (currentIndex < currentTracks.length - 1) playTrack(currentIndex + 1); };
+    document.getElementById('nextBtn').onclick = () => { if (currentIndex < cloudTracks.length - 1) playTrack(currentIndex + 1); };
 
     audio.ontimeupdate = () => {
       if (audio.duration) {
@@ -313,9 +300,7 @@
       }
     };
 
-    audio.onended = () => {
-      if (currentIndex < currentTracks.length - 1) playTrack(currentIndex + 1);
-    };
+    audio.onended = () => { if (currentIndex < cloudTracks.length - 1) playTrack(currentIndex + 1); };
 
     progressBar.onclick = (e) => {
       const rect = progressBar.getBoundingClientRect();
@@ -328,30 +313,12 @@
       return `${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    document.getElementById('createPlaylistBtn').onclick = () => {
-      const name = prompt('Enter new playlist name:');
-      if (name && name.trim() && !userPlaylists[name.trim()]) {
-        userPlaylists[name.trim()] = [];
-        savePlaylists();
-        openPlaylist(name.trim());
-      }
+    document.getElementById('toggleUploadBtn').onclick = () => {
+      uploadPanel.style.display = uploadPanel.style.display === 'none' ? 'flex' : 'none';
     };
 
-    document.getElementById('navHome').onclick = () => {
-      document.getElementById('feedTitle').textContent = 'Top Hits';
-      fetchMusic('Top Hits 2026');
-    };
-
-    searchInput.onkeypress = (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('feedTitle').textContent = `Results for "${searchInput.value}"`;
-        fetchMusic(searchInput.value);
-      }
-    };
-
-    // Initialize App
-    renderPlaylists();
-    fetchMusic('Top Hits 2026');
+    // Load initial songs from cloud
+    loadFirebaseTracks();
   </script>
 </body>
 </html>
