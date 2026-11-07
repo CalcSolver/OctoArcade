@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Octo Music - Auto-Sync Library</title>
+  <title>Octo Music - Auto MP3 Sync</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -114,12 +114,12 @@
       </div>
 
       <div class="hero-banner">
-        <h1 id="feedTitle">GitHub Songs Library</h1>
-        <p>Auto-syncing library straight from your repository folders</p>
+        <h1 id="feedTitle">GitHub MP3 Library</h1>
+        <p>Auto-syncing directly from your Songs/mp3 folder</p>
       </div>
 
       <div class="track-grid" id="trackGrid">
-        <div class="state-msg">Auto-discovering songs from GitHub...</div>
+        <div class="state-msg">Scanning GitHub for MP3 files...</div>
       </div>
     </main>
   </div>
@@ -160,17 +160,6 @@
       (path) => `https://cdn.statically.io/gh/${REPO_USER}/${REPO_NAME}/${BRANCH}/${path}`,
       (path) => `https://fastly.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${path}`
     ];
-
-    async function fetchAssetWithCDNSwitcher(path) {
-      for (const buildUrl of CDN_PROVIDERS) {
-        const targetUrl = buildUrl(path);
-        try {
-          const response = await fetch(targetUrl);
-          if (response.ok) return response;
-        } catch (e) {}
-      }
-      throw new Error(`All CDN gateways failed for asset: ${path}`);
-    }
 
     async function getCDNUrl(path) {
       for (const buildUrl of CDN_PROVIDERS) {
@@ -218,55 +207,48 @@
       });
     }
 
-    // Automatically scans GitHub directory contents to find all songs without manual arrays!
-    async function autoDiscoverGitHubLibrary() {
+    // Automatically scans the Songs/mp3 folder on GitHub
+    async function autoDiscoverMP3s() {
       activePlaylist = null;
       renderPlaylists();
-      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Auto-discovering songs from GitHub...</div>';
+      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Auto-discovering MP3 files from GitHub...</div>';
 
       try {
-        // Fetch metadata folder contents via GitHub API
-        const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/Songs/metadata`);
+        const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/Songs/mp3`);
         if (!apiRes.ok) throw new Error('Failed to reach GitHub repository contents API');
         
         const files = await apiRes.json();
-        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+        const mp3Files = files.filter(f => f.name.toLowerCase().endsWith('.mp3'));
 
-        if (jsonFiles.length === 0) {
-          trackGrid.innerHTML = '<div class="state-msg">No metadata JSON files found inside Songs/metadata/ on GitHub!</div>';
+        if (mp3Files.length === 0) {
+          trackGrid.innerHTML = '<div class="state-msg">No MP3 files found inside the <code>Songs/mp3/</code> folder on GitHub!</div>';
           return;
         }
 
         libraryTracks = [];
-        for (const file of jsonFiles) {
-          try {
-            const songId = file.name.replace('.json', '');
-            const metaRes = await fetchAssetWithCDNSwitcher(`Songs/metadata/${file.name}`);
-            const meta = await metaRes.json();
-            
-            // Check for matching mp3 file name in mp3 folder, or use songId
-            const audioUrl = await getCDNUrl(`Songs/mp3/${songId}.mp3`);
+        for (const file of mp3Files) {
+          // Clean up filename for display (e.g., "Sweet_-_Ballroom_Blitz.mp3" -> Title & Artist)
+          let cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ");
+          let parts = cleanName.split(' - ');
 
-            libraryTracks.push({
-              title: meta.name || meta.title || songId,
-              artist: meta.artist || 'Unknown Artist',
-              cover: meta.cover || 'https://via.placeholder.com/300/181818/ffffff?text=Octo+Music',
-              audio: audioUrl
-            });
-          } catch (err) {
-            console.warn(`Failed loading song: ${file.name}`, err);
-          }
+          let title = parts.length > 1 ? parts[1] : parts[0];
+          let artist = parts.length > 1 ? parts[0] : 'Unknown Artist';
+
+          const audioUrl = await getCDNUrl(`Songs/mp3/${file.name}`);
+
+          libraryTracks.push({
+            title: title,
+            artist: artist,
+            cover: 'https://via.placeholder.com/300/181818/ffffff?text=Octo+Music',
+            audio: audioUrl
+          });
         }
 
         currentTracks = libraryTracks;
-        if (currentTracks.length > 0) {
-          renderGrid(currentTracks);
-        } else {
-          trackGrid.innerHTML = '<div class="state-msg">Could not parse song files. Check your JSON format!</div>';
-        }
+        renderGrid(currentTracks);
       } catch (err) {
         console.error(err);
-        trackGrid.innerHTML = '<div class="state-msg">Error auto-discovering library. Check your repository public status.</div>';
+        trackGrid.innerHTML = '<div class="state-msg">Error scanning GitHub folder. Ensure repository public status is active.</div>';
       }
     }
 
@@ -379,7 +361,7 @@
     };
 
     document.getElementById('navHome').onclick = () => {
-      document.getElementById('feedTitle').textContent = 'GitHub Songs Library';
+      document.getElementById('feedTitle').textContent = 'GitHub MP3 Library';
       currentTracks = libraryTracks;
       renderGrid(currentTracks);
     };
@@ -392,7 +374,7 @@
 
     // Initialize Application
     renderPlaylists();
-    autoDiscoverGitHubLibrary();
+    autoDiscoverMP3s();
   </script>
 </body>
 </html>
