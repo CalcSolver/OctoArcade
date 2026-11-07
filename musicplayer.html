@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Octo Music - GitHub Auto Library</title>
+  <title>Octo Music - Auto MP3 Sync</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -115,7 +115,7 @@
 
       <div class="hero-banner">
         <h1 id="feedTitle">GitHub MP3 Library</h1>
-        <p>Auto-syncing directly from your Songs/mp3 folder</p>
+        <p>Auto-syncing directly from your Songs/MP3s folder</p>
       </div>
 
       <div class="track-grid" id="trackGrid">
@@ -154,6 +154,7 @@
     const REPO_USER = 'CalcSolver';
     const REPO_NAME = 'OctoArcade';
     const BRANCH = 'main';
+    const FOLDER_NAME = 'Songs/MP3s'; // Updated to match your exact capitalized folder name
 
     let libraryTracks = [];
     let userPlaylists = JSON.parse(localStorage.getItem('octo_playlists') || '{"Favorites": []}');
@@ -196,14 +197,14 @@
       trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Auto-discovering MP3 files from GitHub...</div>';
 
       try {
-        const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/Songs/mp3`);
+        const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/${FOLDER_NAME}`);
         if (!apiRes.ok) throw new Error('Failed to reach GitHub repository contents API');
         
         const files = await apiRes.json();
         const mp3Files = files.filter(f => f.name.toLowerCase().includes('.mp3'));
 
         if (mp3Files.length === 0) {
-          trackGrid.innerHTML = '<div class="state-msg">No MP3 files found inside the <code>Songs/mp3/</code> folder on GitHub!</div>';
+          trackGrid.innerHTML = `<div class="state-msg">No MP3 files found inside the <code>${FOLDER_NAME}/</code> folder on GitHub!</div>`;
           return;
         }
 
@@ -215,7 +216,7 @@
           let title = parts.length > 1 ? parts[1] : parts[0];
           let artist = parts.length > 1 ? parts[0] : 'Unknown Artist';
 
-          const audioUrl = `https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/Songs/mp3/${file.name}`;
+          const audioUrl = `https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${FOLDER_NAME}/${file.name}`;
 
           libraryTracks.push({
             title: title,
