@@ -28,24 +28,36 @@ main{flex:1;width:100%;max-width:1320px;margin:0 auto;padding:20px 22px 40px}
 @media(max-width:600px){.bar{padding:10px 14px}main{padding:16px 14px 32px}.grid{gap:12px}}
 .card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;min-width:0;transition:transform .15s,box-shadow .15s,border-color .15s}
 .card:hover,.card:focus-visible{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 26px rgba(0,0,0,.45)}
-.pill{position:absolute;left:10px;bottom:10px;z-index:2;padding:5px 14px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;font-size:.85rem;opacity:0;transform:translateY(4px);transition:.15s;pointer-events:none}
+.pill{position:absolute;top:10px;right:10px;z-index:2;padding:5px 14px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700;font-size:.85rem;opacity:0;transform:translateY(4px);transition:.15s;pointer-events:none}
 .card:hover .pill,.card:focus-visible .pill{opacity:1;transform:none}
 .thumb{position:relative;aspect-ratio:16/11;display:grid;place-items:center;background:linear-gradient(135deg,var(--panel),var(--panel2));font-size:3.6rem;font-weight:700;color:rgba(255,255,255,.4);overflow:hidden}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .meta{padding:10px 12px 12px}.meta b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.meta small{color:var(--muted)}
-.like{position:absolute;top:8px;right:8px;width:34px;height:34px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;cursor:pointer;z-index:2}
-.like svg{width:18px;height:18px;fill:currentColor}
-.like.on{background:#da3633}
-.like:hover{background:rgba(0,0,0,.8)}.like.on:hover{background:#f04b48}
+.votes{position:absolute;left:8px;bottom:8px;z-index:2;display:flex;gap:6px;opacity:0;transition:.15s}
+.card:hover .votes,.card:focus-within .votes,.votes:has(.on){opacity:1}
+.vb{width:32px;height:32px;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;cursor:pointer}
+.vb svg{width:17px;height:17px;fill:currentColor}.vb.down svg{transform:rotate(180deg)}
+.vb:hover{background:rgba(0,0,0,.85)}.vb.up.on{background:#2fa84f}.vb.down.on{background:#da3633}
+.card.dis{opacity:.5}
+.pbar .vb{background:var(--panel);border:1px solid var(--line)}
 .status{text-align:center;padding:60px 10px;color:var(--muted)}.status .btn{margin-top:14px}
 .more{display:block;margin:24px auto 0}
+#below{max-width:1320px;margin:18px auto 0;color:#e6edf3}
+.about{background:#161b22;border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin-bottom:18px}
+.about h2,#below>h2{margin:0 0 8px;font-size:1.2rem}.about p{margin:0;line-height:1.55;color:var(--muted)}
+#below>h2{margin:18px 0 12px}
+.cat-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:18px}
+.cat-tile{height:72px;border:0;border-radius:12px;background:#fff;color:#111;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.cat-tile:hover{filter:brightness(.92)}
+.subsel{margin-bottom:16px}
 footer{padding:16px;text-align:center;color:var(--muted);background:var(--panel2);border-top:1px solid var(--line)}
 .overlay{position:fixed;inset:0;z-index:10;background:rgba(5,6,9,.96);display:flex;flex-direction:column;padding:10px}
-#player{background:#05060a}
-.pbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-bottom:10px;color:#fff}
+#settings{align-items:center;justify-content:center}
+#player{display:block;overflow-y:auto;background:#05060a;padding:0 10px 40px}
+.pbar{position:sticky;top:0;z-index:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;background:#05060a;color:#fff}
 .pbar h2{margin:0;font-size:1.15rem;flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #via{color:#9aa4b2;font-size:.85rem}
-#frame{flex:1;width:100%;border:1px solid var(--line);border-radius:8px;background:#000}
+#frame{display:block;height:calc(100vh - 76px);width:100%;border:1px solid var(--line);border-radius:8px;background:#000}
 .dlg{margin:auto;width:100%;max-width:520px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
 .dlg h2{margin:0 0 8px}.row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
 .row small{display:block;color:var(--muted)}.seg{display:flex;gap:6px}
@@ -77,13 +89,16 @@ select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;p
 <div id="player" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ptitle">
   <div class="pbar">
     <h2 id="ptitle"></h2><span id="via"></span>
+    <span id="pvotes" style="display:flex;gap:6px"></span>
     <select id="cdnPlayer" aria-label="Content source"></select>
     <button class="btn" id="reload">Reload</button>
     <button class="btn" id="copy">Copy link</button>
+    <button class="btn" id="report">Report broken</button>
     <button class="btn" id="full">Fullscreen</button>
     <button class="btn primary" id="close">Close</button>
   </div>
   <iframe id="frame" title="Game" allow="fullscreen; autoplay; gamepad" allowfullscreen></iframe>
+  <div id="below"></div>
 </div>
 
 <div id="settings" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="stitle">
@@ -102,58 +117,66 @@ select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;p
 
 <script>
 (function () {
-  var OWNER = "CalcSolver", REPO = "OctoArcade", BRANCH = "main", PANIC_URL = "https://students.aquinas.wa.edu.au/";
-  var NPM_PKG = ""; // set to an npm package that mirrors this repo to enable unpkg
-  var $ = function (s) { return document.querySelector(s); };
-  var ls = {
-    get: function (k, d) { try { var v = localStorage.getItem("octo:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-    set: function (k, v) { try { localStorage.setItem("octo:" + k, JSON.stringify(v)); } catch (e) {} }
+  const OWNER = "CalcSolver", REPO = "OctoArcade", BRANCH = "main", PANIC_URL = "https://students.aquinas.wa.edu.au/";
+  const NPM_PKG = ""; // set to an npm package that mirrors this repo to enable unpkg
+  const FORM = "https://forms.gle/aQbx7JWNNM8XWyXs7";
+  const $ = s => document.querySelector(s);
+  const ls = {
+    get(k, d) { try { const v = localStorage.getItem("octo:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("octo:" + k, JSON.stringify(v)); } catch (e) {} },
+    del(k) { try { localStorage.removeItem("octo:" + k); } catch (e) {} }
   };
+  const cacheGet = (k, ms) => { const c = ls.get(k, null); return c && Date.now() - c.t < ms ? c.v : null; };
+  const cacheSet = (k, v) => ls.set(k, { t: Date.now(), v });
 
-  /* ---------- Multi-CDN failover. Auto order = Pages, jsDelivr, Fastly, Gcore, GitHub raw ---------- */
-  var enc = function (p) { return p.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/"); };
-  var jsd = function (h) { return function (p) { return "https://" + h + "/gh/" + OWNER + "/" + REPO + "@" + BRANCH + "/" + enc(p); }; };
-  var CDNS = [
-    { id: "pages", name: "GitHub Pages", direct: true, re: /\.github\.io\//, url: function (p) { return "https://" + OWNER.toLowerCase() + ".github.io/" + REPO + "/" + enc(p); } },
+  /* ---------- Multi-CDN: Pages, jsDelivr, Fastly, Gcore, GitHub raw (and unpkg if NPM_PKG is set) ---------- */
+  const enc = p => String(p).replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/");
+  const jsd = h => (o, r, b, p) => `https://${h}/gh/${o}/${r}@${b}/` + enc(p);
+  const CDNS = [
+    { id: "pages", name: "GitHub Pages", direct: true, re: /\.github\.io\//, url: (o, r, b, p) => `https://${o.toLowerCase()}.github.io/${r}/` + enc(p) },
     { id: "jsdelivr", name: "jsDelivr", re: /\/\/cdn\.jsdelivr\.net\//, url: jsd("cdn.jsdelivr.net") },
     { id: "fastly", name: "jsDelivr (Fastly)", re: /\/\/fastly\.jsdelivr\.net\//, url: jsd("fastly.jsdelivr.net") },
     { id: "gcore", name: "jsDelivr (Gcore)", re: /\/\/gcore\.jsdelivr\.net\//, url: jsd("gcore.jsdelivr.net") },
-    { id: "raw", name: "GitHub raw", re: /raw\.githubusercontent\.com\//, url: function (p) { return "https://raw.githubusercontent.com/" + OWNER + "/" + REPO + "/" + BRANCH + "/" + enc(p); } },
-    { id: "unpkg", name: "unpkg (npm)", re: /\/\/unpkg\.com\//, url: function (p) { return NPM_PKG ? "https://unpkg.com/" + NPM_PKG + "/" + enc(p) : null; } }
-  ].filter(function (c) { return c.id !== "unpkg" || NPM_PKG; });
-  var cdnOf = function (u) { return CDNS.filter(function (c) { return c.re.test(u); })[0] || { name: "CDN" }; };
-  function candidates(path) {
-    var list = CDNS.map(function (c) { return c.url(path); }), pref = ls.get("cdnPref", "");
-    var first = list.filter(function (u) { return pref && cdnOf(u).id === pref; });
-    return first.concat(list.filter(function (u) { return first.indexOf(u) < 0; }));
+    { id: "raw", name: "GitHub raw", re: /raw\.githubusercontent\.com\//, url: (o, r, b, p) => `https://raw.githubusercontent.com/${o}/${r}/${b}/` + enc(p) },
+    { id: "unpkg", name: "unpkg (npm)", re: /\/\/unpkg\.com\//, url: (o, r, b, p) => NPM_PKG ? `https://unpkg.com/${NPM_PKG}/` + enc(p) : null }
+  ].filter(c => c.id !== "unpkg" || NPM_PKG);
+  const cdnOf = u => CDNS.find(c => c.re.test(u)) || { id: "?", name: "CDN" };
+  const cdnUrls = (o, r, b, p) => CDNS.map(c => c.url(o, r, b, p)).filter(Boolean);
+  function order(urls) {
+    const pref = ls.get("cdnPref", ""), first = pref ? urls.filter(u => cdnOf(u).id === pref) : [];
+    return first.concat(urls.filter(u => !first.includes(u)));
   }
+  const candidates = p => order(cdnUrls(OWNER, REPO, BRANCH, p));
   async function fetchOne(u, ms) {
-    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, ms || 8000);
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), ms || 8000);
     try {
-      var r = await fetch(u, { signal: ctl.signal });
+      const r = await fetch(u, { signal: ctl.signal });
       if (!r.ok) throw new Error("HTTP " + r.status);
       return { url: u, cdn: cdnOf(u), text: await r.text() };
     } finally { clearTimeout(t); }
   }
-  function injectBase(html, url) {
-    var tag = '<base href="' + url.replace(/[^\/]*$/, "") + '">';
-    return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + tag; }) : tag + html;
+  async function fetchFirst(urls) {
+    const errs = [];
+    for (const u of order(urls)) {
+      try { return await fetchOne(u); } catch (e) { errs.push(cdnOf(u).name + ": " + (e.name === "AbortError" ? "timed out" : e.message)); }
+    }
+    throw new Error("Every CDN failed. " + errs.join(" | "));
   }
+  const repoGet = p => fetchFirst(candidates(p));
+  const injectBase = (html, url) => { const tag = '<base href="' + url.replace(/[^\/]*$/, "") + '">'; return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, m => m + tag) : tag + html; };
   function mountSelect(sel) {
     sel.innerHTML = "";
-    [["", "Source: Auto"]].concat(CDNS.map(function (c) { return [c.id, c.name]; })).forEach(function (p) {
-      var o = document.createElement("option"); o.value = p[0]; o.textContent = p[1]; sel.appendChild(o);
-    });
+    [["", "Source: Auto"]].concat(CDNS.map(c => [c.id, c.name])).forEach(p => { const o = document.createElement("option"); o.value = p[0]; o.textContent = p[1]; sel.appendChild(o); });
     sel.value = ls.get("cdnPref", "");
-    sel.onchange = function () {
+    sel.onchange = () => {
       ls.set("cdnPref", sel.value);
-      [$("#cdnPlayer"), $("#cdnSet")].forEach(function (s) { s.value = sel.value; });
-      if (current && !$("#player").hidden) play(current);
+      [$("#cdnPlayer"), $("#cdnSet")].forEach(x => { x.value = sel.value; });
+      if (current && !$("#player").hidden) play(current, true);
     };
   }
 
-  /* ---------- Games ---------- */
-  var CATS = [
+  /* ---------- Data ---------- */
+  const CATS = [
     ["Horror", /horror|fnaf|nights|backroom|scary|haunt|ghost|granny|baldi|slender|nightmare|creep|asylum|mansion|evil|dead|zombie|poppy|huggy|bendy|spooky|cursed|terror|scp|doll|siren/],
     ["Shooter", /shoot|gun|sniper|strike|bullet|warfare|1942|metalslug|krunker|1v1|tank|commando|army|battle|fps|rooftop|mayhem|bowmaster|csgo|counter/],
     ["Fighting", /mortal|kombat|fight|brawl|smash|karate|tekken|wwe|stickwar|boxing|ninja|ragdoll|dragonfist|dragonball|devolution|ufc|mma|wrestl/],
@@ -165,121 +188,298 @@ select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;p
     ["Puzzle", /puzzle|2048|sudoku|tetris|chess|minesweeper|word|jigsaw|bubble|solitaire|mahjong|checkers|connect|memory|maze|brain|logic|tile|merge|bejeweled|sort|riddle|quiz|blox|candy|jewel|gem|stack|pipe|sokoban|unblock|physics/],
     ["Retro & Arcade", /pacman|snake|pong|invader|breakout|arcade|retro|galaga|frogger|asteroid|emulator|atari|donkey|contra|kirby|qbert/]
   ];
-  var PAGE = 60, IMG = /\.(png|jpe?g|gif|webp|svg|ico|avif|bmp)$/i, SKIP = /^(index|readme)\.html?$/i;
-  var base = function (f) { return f.replace(/\.[^.]+$/, ""); };
-  var pretty = function (f) { return base(f).replace(/[-_]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, function (c) { return c.toUpperCase(); }); };
+  const BLURB = { Shooter: "Aim, shoot and stay alive.", Fighting: "Pick your moves and win the fight.", Sports: "Compete and score in a quick match.", "Strategy & Tycoon": "Plan ahead, grow your empire and keep upgrading.", Platformer: "Run, jump and dodge your way through the levels.", Racing: "Hit the gas and beat the clock.", Adventure: "Explore, collect and uncover the story.", Puzzle: "Think it through and solve each challenge.", "Retro & Arcade": "A classic arcade-style game.", Horror: "Stay calm if you can. This one is spooky.", "Flash Games": "A classic Flash game, played with Ruffle." };
+  const PAGE = 60, IMG = /\.(png|jpe?g|gif|webp|svg|ico|avif|bmp)$/i, SKIP = /^(index|readme|feed|extra|links)\.html?$/i;
+  const base = f => f.replace(/\.[^.]+$/, "");
+  const pretty = f => base(f).replace(/[-_]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, c => c.toUpperCase());
+  const norm = n => String(n).toLowerCase().replace(/\W/g, "");
 
-  var set = Object.assign({ theme: "dark", size: 190, hotkey: true, keys: ["`"] }, ls.get("settings2", {}));
+  const set = Object.assign({ theme: "dark", size: 190, hotkey: true, keys: ["`"] }, ls.get("settings2", {}));
   if (set.theme !== "light") set.theme = "dark";
   set.size = parseInt(set.size, 10) || 190;
-  var games = [], byKey = {}, icons = {}, view = "all", q = "", shown = PAGE, current = null, token = 0;
-  var votes = ls.get("votes", {}), recent = ls.get("recent", []);
-  function saveSet() { ls.set("settings2", Object.assign(ls.get("settings2", {}), set)); }
+  let games = [], coll = {}, failed = {}, byKey = {}, iconMap = {}, allFiles = [], descs = {}, catOv = {};
+  let view = "all", sub = "", q = "", shown = PAGE, current = null, token = 0;
+  let votes = ls.get("votes", {}), recent = ls.get("recent", []);
+  const COLLS = {};
+  const allGames = () => games.concat(...Object.keys(COLLS).map(k => coll[k] || []));
+  const reindex = () => { byKey = {}; allGames().forEach(g => { byKey[g.key] = g; }); };
+  const saveSet = () => ls.set("settings2", Object.assign(ls.get("settings2", {}), set));
 
+  /* ---------- Main repo: one file list gives games, .icon files and thumbnails ---------- */
   async function loadList(force) {
-    var cached = !force && ls.get("files2", null);
-    if (cached && Date.now() - cached.t < 1800e3) return cached.files;
-    var files, old = ls.get("files2", null);
+    const fresh = !force && cacheGet("files3", 1800e3);
+    if (fresh) return fresh;
+    const old = ls.get("files3", null);
+    let files;
     try {
-      var r = await fetchOne("https://api.github.com/repos/" + OWNER + "/" + REPO + "/git/trees/" + BRANCH + "?recursive=1", 10000);
-      files = JSON.parse(r.text).tree.filter(function (t) { return t.type === "blob"; }).map(function (t) { return t.path; });
-    } catch (e) { // GitHub API limited or blocked: use jsDelivr's file index, then the last saved list
+      const r = await fetchOne(`https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`, 10000);
+      files = JSON.parse(r.text).tree.filter(t => t.type === "blob").map(t => t.path);
+    } catch (e) {
       try {
-        var j = await fetchOne("https://data.jsdelivr.com/v1/packages/gh/" + OWNER + "/" + REPO + "@" + BRANCH + "?structure=flat", 10000);
-        files = JSON.parse(j.text).files.map(function (f) { return f.name.replace(/^\//, ""); });
-      } catch (e2) { if (old) return old.files; throw e2; }
+        const j = await fetchOne(`https://data.jsdelivr.com/v1/packages/gh/${OWNER}/${REPO}@${BRANCH}?structure=flat`, 10000);
+        files = JSON.parse(j.text).files.map(f => f.name.replace(/^\//, ""));
+      } catch (e2) { if (old) return old.v; throw e2; }
     }
-    ls.set("files2", { t: Date.now(), files: files });
+    cacheSet("files3", files);
     return files;
   }
+  const SHSG = "https://cdn.jsdelivr.net/gh/JoshMerlino/shsg-pfile";
+  const FLASH = ["4th and Goal 2018", "B-Cubed", "Bloons Tower Defense 2", "Bloons Tower Defense 1", "Bloxorz", "BMX Park", "Bubble Trouble", "Cubefield", "Dad N Me", "Dragon Fist 3", "Dragon Ball Z Devolution", "Duck Life 4", "Duck Life 3", "Duck Life 2", "Duck Life 1", "Electric Man 2", "Escape the Bathroom", "Escape the Car", "Escape the Closet", "Escape the Freezer", "Feudalism 2", "Gunblood", "Gun Mayhem", "Gun Mayhem 2", "Helicopter", "Henry Stickmin - Breaking the Bank", "Henry Stickmin - Crossing the Pit", "Henry Stickmin - Stealing the Diamond", "Impossible Quiz", "Impossible Quiz 2", "Kill the Spartan", "Learn to Fly", "Learn to Fly 2", "Line rider 1", "Madness Project Nexus", "Minesweeper"];
+  const flashGames = () => FLASH.map(n => { const slug = n.toLowerCase().replace(/ /g, "-"); return { key: "flash:" + slug, name: n, cat: "Flash Games", iconUrls: [`${SHSG}/thumbs/${slug}.jpg`], swf: n === "Duck Life 4" ? "https://cdn.jsdelivr.net/gh/ellieeet123/swf/swf/duck-life-4.swf" : `${SHSG}/games/${slug}.swf` }; });
+  const ruffleDoc = swf => `<!DOCTYPE html><html><body style="margin:0;background:#000;height:100vh"><script src="https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle"><\/script><script>const p=window.RufflePlayer.newest().createPlayer();p.style.cssText="width:100%;height:100%";document.body.append(p);p.load(${JSON.stringify(swf)});<\/script></body></html>`;
+
   function build(files) {
-    icons = {};
-    files.forEach(function (f) { if (/^icons?\//i.test(f) && IMG.test(f)) icons[base(f.split("/").pop()).toLowerCase()] = f; });
-    games = files.filter(function (f) { return /^Games\/.+\.html?$/i.test(f) && !SKIP.test(f.split("/").pop()); }).map(function (f) {
-      var file = f.split("/").pop(), id = base(file).toLowerCase(), hit = CATS.filter(function (c) { return c[1].test(id); })[0];
-      return { key: f, name: pretty(file), id: id, cat: hit ? hit[0] : "More Games" };
-    }).sort(function (a, b) { return a.name.localeCompare(b.name, undefined, { numeric: true }); });
-    byKey = {}; games.forEach(function (g) { byKey[g.key] = g; });
-    [["#moviesLink", "movies.html"], ["#musicLink", "musicplayer.html"], ["#romsLink", "roms.html"]].forEach(function (p) { $(p[0]).hidden = files.indexOf(p[1]) < 0; });
+    allFiles = files; iconMap = {};
+    files.forEach(f => {
+      const m = /^(?:icons?\/|games\/(?=[^/]+$))/i.test(f);
+      if (!m) return;
+      const id = base(f.split("/").pop()).toLowerCase(), e = iconMap[id] || (iconMap[id] = {});
+      if (/\.icon$/i.test(f)) e.icon = f; else if (IMG.test(f)) e.thumb = f;
+    });
+    games = files.filter(f => /^Games\/.+\.html?$/i.test(f) && !SKIP.test(f.split("/").pop())).map(f => {
+      const file = f.split("/").pop(), id = base(file).toLowerCase(), hit = CATS.find(c => c[1].test(id)), ic = iconMap[id] || {};
+      return { key: f, name: pretty(file), id, cat: catOv[id] || (hit ? hit[0] : "More Games"), iconFile: ic.icon, thumbFile: ic.thumb };
+    }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })).concat(flashGames());
+    reindex();
+    [["#moviesLink", "movies.html"], ["#musicLink", "musicplayer.html"], ["#romsLink", "roms.html"]].forEach(p => { $(p[0]).hidden = !files.includes(p[1]); });
+  }
+  // optional repo files: categories.json { "Shooter": ["1942"] } and descriptions.json { "1942": "text" }
+  async function loadOptional() {
+    try { const o = JSON.parse((await repoGet("categories.json")).text); Object.entries(o).forEach(([c, names]) => names.forEach(n => { catOv[String(n).toLowerCase().replace(/\.html?$/, "")] = c; })); games.forEach(g => { if (g.id && catOv[g.id]) g.cat = catOv[g.id]; }); } catch (e) {}
+    try { const o = JSON.parse((await repoGet("descriptions.json")).text); Object.entries(o).forEach(([n, d]) => { descs[String(n).toLowerCase().replace(/\.html?$/, "")] = String(d); }); } catch (e) {}
+    if (Object.keys(catOv).length && $("#player").hidden) render();
+  }
+
+  /* ---------- Icons: .icon text first, then the thumbnail (.jpg) from the repo, then a letter tile ---------- */
+  function parseIcon(raw, path) {
+    const t = raw.trim();
+    if (!t) return null;
+    if (/^(\uFFFD|GIF8|RIFF)/.test(t) || t.includes("\u0000")) return { imgs: candidates(path) };      // really an image file
+    if (/^<(svg|\?xml)/i.test(t)) return { imgs: ["data:image/svg+xml;charset=utf-8," + encodeURIComponent(t)] };
+    const first = t.split(/\s+/)[0];
+    if (/^(https?:|data:|blob:)/i.test(first)) return { imgs: [first] };
+    if (first.startsWith("//")) return { imgs: ["https:" + first] };
+    if (IMG.test(first)) return { imgs: candidates(first) };                                          // path inside the repo
+    if ([...t].length <= 4) return { text: t };                                                        // emoji
+    return null;
+  }
+  const iconCache = new Map();
+  function iconSources(g) {
+    if (!iconCache.has(g.key)) {
+      iconCache.set(g.key, (async () => {
+        if (g.iconUrls) return { imgs: g.iconUrls };
+        let imgs = [];
+        if (g.iconFile) {
+          try {
+            const p = parseIcon((await repoGet(g.iconFile)).text, g.iconFile);
+            if (p && p.text) return p;
+            if (p) imgs = p.imgs;
+          } catch (e) {}
+        }
+        if (g.thumbFile) imgs = imgs.concat(candidates(g.thumbFile));     // the repo's own thumbnail is the fallback
+        return { imgs };
+      })());
+    }
+    return iconCache.get(g.key);
+  }
+  function showImgs(box, list) {
+    list = list.slice();
+    const next = () => {
+      const src = list.shift(); if (src === undefined) return;
+      const img = new Image(); img.alt = ""; img.referrerPolicy = "no-referrer";
+      img.onload = () => box.prepend(img);
+      img.onerror = next;
+      img.src = src;
+    };
+    next();
+  }
+  const iconObs = new IntersectionObserver(es => es.forEach(async e => {
+    if (!e.isIntersecting) return;
+    iconObs.unobserve(e.target);
+    const box = e.target, res = await iconSources(box._g);
+    if (res.text) { box.textContent = res.text; return; }
+    showImgs(box, res.imgs || []);
+  }), { rootMargin: "300px" });
+
+  /* ---------- Other collections ---------- */
+  async function loadAI() {
+    const c = cacheGet("ai5", 3600e3); if (c) return c;
+    const feed = p => `https://gamemonetize.com/feed.php?format=0&num=300&page=${p}`;
+    const pull = async p => {
+      for (const u of [feed(p), "https://api.allorigins.win/raw?url=" + encodeURIComponent(feed(p))]) {
+        try { const j = await (await fetch(u)).json(); if (Array.isArray(j)) return j; } catch (e) {}
+      }
+      return [];
+    };
+    const rows = (await Promise.all([1, 2, 3, 4, 5].map(pull))).flat(), seen = new Set();
+    const list = rows.filter(i => { const t = norm(i.title || ""); if (!i.url || !t || seen.has(i.url) || seen.has(t)) return false; seen.add(i.url); seen.add(t); return true; })
+      .map(i => ({ key: "ai:" + (i.id || i.url), name: String(i.title), url: i.url, ext: true, iconUrls: i.thumb ? [i.thumb] : [], sub: i.category || "Other", coll: "ai", cat: "AI Games", desc: String(i.description || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 300) }));
+    if (!list.length) throw new Error("feed unavailable");
+    cacheSet("ai5", list); return list;
+  }
+  const tree = async (o, r, b, recursive) => JSON.parse((await fetchOne(`https://api.github.com/repos/${o}/${r}/git/trees/${b}${recursive ? "?recursive=1" : ""}`, 12000)).text).tree;
+  async function loadUGS() {
+    const c = cacheGet("ugs3", 3600e3); if (c) return c;
+    const U = ["brickyosu", "ugs-files-sorted", "main"];
+    const list = (await tree(...U, true)).filter(t => t.type === "blob" && /\.html?$/i.test(t.path) && !/(^|\/)(index|readme)\.html?$/i.test(t.path)).map(t => {
+      const parts = t.path.split("/"), folder = parts.length > 1 ? parts[0] : "", file = parts.pop();
+      let b = base(file);
+      if (folder && /^cl./i.test(b) && b[2].toLowerCase() === folder[0].toLowerCase()) b = b.slice(2);
+      return { key: "ugs:" + t.path, name: pretty(b + ".x"), urls: cdnUrls(...U, t.path), sub: /[a-z]/i.test(folder[0] || "") ? folder[0].toUpperCase() : "#", coll: "ugs", cat: "UGS Collection" };
+    }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    if (!list.length) throw new Error("no games"); cacheSet("ugs3", list); return list;
+  }
+  async function loadSelenite() {
+    const c = cacheGet("sel2", 3600e3); if (c) return c;
+    const S = ["selenite-cc", "selenite-old", "main"], NOT = /^(\.|assets?$|css$|js$|img$|images?$|static$|libs?$|fonts?$|node_modules$|public$|src$|docs?$|scripts?$|partials?$|data$)/i;
+    const list = (await tree(...S, false)).filter(t => t.type === "tree" && !NOT.test(t.path)).map(t => {
+      const f = t.path.charAt(0).toUpperCase();
+      return { key: "sel:" + t.path, name: pretty(t.path + ".x").replace(/(^|\s)\S/g, m => m.toUpperCase()), urls: cdnUrls(...S, t.path + "/index.html"), iconUrls: cdnUrls(...S, t.path + "/logo.jpg"), sub: /[A-Z]/.test(f) ? f : "#", coll: "sel", cat: "Selenite" };
+    }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    if (!list.length) throw new Error("no games"); cacheSet("sel2", list); return list;
+  }
+  // seixorp/<group>/<file>: each file's text is a link, opened in a new tab
+  async function loadSeixorp() {
+    const c = cacheGet("six2", 3600e3); if (c) return c;
+    const entries = allFiles.filter(f => /^seixorp\/[^/]+\/[^/]+$/.test(f));
+    const texts = await Promise.all(entries.map(f => repoGet(f).then(r => r.text.trim(), () => "")));
+    const list = entries.map((f, i) => { const p = f.split("/"); return texts[i] ? { key: "six:" + f, name: p[1] + " " + p[2], url: texts[i], link: true, sub: p[1], coll: "six", cat: "Seixorp" } : null; }).filter(Boolean);
+    if (!list.length) throw new Error("no links"); cacheSet("six2", list); return list;
+  }
+  async function loadGeneric(o, r, b, path, label, kp) {
+    const p = String(path || "").replace(/^\/+|\/+$/g, ""), top = JSON.parse((await fetchOne(`https://api.github.com/repos/${o}/${r}/contents${p ? "/" + p : ""}?ref=${b}`, 12000)).text);
+    const dirs = top.filter(i => i.type === "dir"), files = top.filter(i => i.type === "file" && /\.html?$/i.test(i.name) && !/^(index|readme)\.html?$/i.test(i.name));
+    return dirs.length && dirs.length >= files.length
+      ? dirs.map(d => ({ key: kp + ":" + d.path, name: pretty(d.name + ".x"), urls: cdnUrls(o, r, b, d.path + "/index.html"), coll: kp, cat: label }))
+      : files.map(f => ({ key: kp + ":" + f.path, name: pretty(f.name), urls: cdnUrls(o, r, b, f.path), coll: kp, cat: label }));
+  }
+  Object.assign(COLLS, { ai: { label: "AI Games", load: loadAI }, ugs: { label: "UGS Collection", load: loadUGS }, sel: { label: "Selenite", load: loadSelenite }, six: { label: "Seixorp", load: loadSeixorp } });
+  async function loadCollections() {
+    try { // sources.json: [{ "name", "owner", "repo", "branch", "path" }]
+      const list = JSON.parse((await repoGet("sources.json")).text);
+      (Array.isArray(list) ? list : []).forEach((s, i) => { const k = "ext" + i, label = s.name || s.repo; COLLS[k] = { label, load: () => loadGeneric(s.owner, s.repo, s.branch || "main", s.path, label, k) }; });
+    } catch (e) {}
+    const have = new Set(games.map(g => norm(g.name)));
+    await Promise.all(Object.keys(COLLS).map(async k => {
+      try { coll[k] = (await COLLS[k].load()).filter(g => { const n = norm(g.name); if (have.has(n)) return false; have.add(n); return true; }); failed[k] = false; }
+      catch (e) { console.warn(COLLS[k].label + " failed", e); failed[k] = true; }
+      reindex();
+      if ($("#player").hidden) render();
+    }));
+    tryPending();
   }
 
   /* ---------- Rendering ---------- */
-  function cats() {
-    var found = games.map(function (g) { return g.cat; }), order = CATS.map(function (c) { return c[0]; }).concat("More Games");
-    return order.filter(function (c, i) { return found.indexOf(c) > -1; });
+  const THUMB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>';
+  function voteBtn(key, v) {
+    const b = document.createElement("button");
+    b.className = "vb " + (v === 1 ? "up" : "down") + (votes[key] === v ? " on" : ""); b.dataset.key = key; b.dataset.v = v;
+    b.innerHTML = THUMB; b.setAttribute("aria-label", (v === 1 ? "Like " : "Dislike ") + key);
+    b.onclick = e => { e.stopPropagation(); vote(key, v); };
+    return b;
   }
+  function vote(key, v) {
+    if (votes[key] === v) delete votes[key]; else votes[key] = v;
+    ls.set("votes", votes);
+    document.querySelectorAll(".vb").forEach(b => b.classList.toggle("on", votes[b.dataset.key] === +b.dataset.v));
+    document.querySelectorAll(".card").forEach(c => c.classList.toggle("dis", votes[c.dataset.key] === -1));
+    chips();
+    if (view === "liked" && !q && $("#player").hidden) render();
+  }
+  const cats = () => { const found = games.map(g => g.cat), order = CATS.map(c => c[0]).concat("More Games", "Flash Games"); return order.filter(c => found.includes(c)); };
   function list() {
-    var t = q.toLowerCase();
-    if (t) return games.filter(function (g) { return g.name.toLowerCase().indexOf(t) > -1; });
-    if (view === "liked") return games.filter(function (g) { return votes[g.key] === 1; });
-    if (view === "recent") return recent.map(function (k) { return byKey[k]; }).filter(Boolean);
+    const t = q.toLowerCase();
+    if (t) return allGames().filter(g => g.name.toLowerCase().includes(t));
+    if (view === "liked") return allGames().filter(g => votes[g.key] === 1);
+    if (view === "recent") return recent.map(k => byKey[k]).filter(Boolean);
+    if (COLLS[view]) return (coll[view] || []).filter(g => !sub || g.sub === sub);
     if (view === "all") return games;
-    return games.filter(function (g) { return g.cat === view; });
+    return games.filter(g => g.cat === view);
   }
+  function go(v) { view = v; sub = ""; q = ""; $("#q").value = ""; shown = PAGE; render(); window.scrollTo(0, 0); }
   function chips() {
-    var defs = [["all", "All"]].concat(cats().map(function (c) { return [c, c]; }), [["liked", "Liked"], ["recent", "Recent"]]);
+    const defs = [["all", "All", games.length]].concat(cats().map(c => [c, c, games.filter(g => g.cat === c).length]),
+      Object.keys(COLLS).filter(k => (coll[k] || []).length || failed[k]).map(k => [k, COLLS[k].label, (coll[k] || []).length]),
+      [["liked", "Liked", allGames().filter(g => votes[g.key] === 1).length], ["recent", "Recent", recent.length]]);
     $("#chips").innerHTML = "";
-    defs.forEach(function (d) {
-      var b = document.createElement("button");
-      b.className = "chip" + (view === d[0] && !q ? " on" : ""); b.textContent = d[1];
-      b.onclick = function () { view = d[0]; q = ""; $("#q").value = ""; shown = PAGE; render(); };
+    defs.forEach(d => {
+      const b = document.createElement("button"); b.className = "chip" + (view === d[0] && !q ? " on" : "");
+      b.textContent = d[1] + (d[2] ? " (" + d[2].toLocaleString() + ")" : ""); b.onclick = () => go(d[0]);
       $("#chips").appendChild(b);
     });
   }
-  function thumb(box, g) {
-    var path = icons[g.id]; if (!path) return;
-    var urls = candidates(path), img = new Image();
-    img.alt = ""; img.loading = "lazy"; img.referrerPolicy = "no-referrer";
-    img.onerror = function () { if (urls.length) img.src = urls.shift(); else img.remove(); };
-    img.src = urls.shift(); box.appendChild(img);
-  }
   function tint(el, name) {
-    var h = 0; for (var i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
-    el.style.background = "linear-gradient(135deg,hsl(" + h + " 55% 32%),hsl(" + ((h + 50) % 360) + " 60% 16%))";
+    let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+    el.style.background = `linear-gradient(135deg,hsl(${h} 55% 32%),hsl(${(h + 50) % 360} 60% 16%))`;
   }
   function card(g) {
-    var c = document.createElement("article"); c.className = "card"; c.tabIndex = 0;
-    var t = document.createElement("div"); t.className = "thumb"; t.textContent = g.name.charAt(0); tint(t, g.name); thumb(t, g);
-    var like = document.createElement("button"); like.className = "like" + (votes[g.key] === 1 ? " on" : "");
-    like.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'; like.setAttribute("aria-label", "Like " + g.name);
-    like.onclick = function (e) { e.stopPropagation(); if (votes[g.key] === 1) delete votes[g.key]; else votes[g.key] = 1; ls.set("votes", votes); like.classList.toggle("on", votes[g.key] === 1); if (view === "liked") render(); };
-    var m = document.createElement("div"); m.className = "meta";
-    var b = document.createElement("b"); b.textContent = g.name; b.title = g.name;
-    var s = document.createElement("small"); s.textContent = g.cat;
-    var pill = document.createElement("span"); pill.className = "pill"; pill.textContent = "\u25B6 Play";
-    m.append(b, s); t.append(like, pill); c.append(t, m);
-    c.onclick = function () { play(g); };
-    c.onkeydown = function (e) { if (e.key === "Enter") play(g); };
+    const c = document.createElement("article"); c.className = "card" + (votes[g.key] === -1 ? " dis" : ""); c.tabIndex = 0; c.dataset.key = g.key;
+    const t = document.createElement("div"); t.className = "thumb"; t.textContent = g.name.charAt(0); tint(t, g.name); t._g = g;
+    const pill = document.createElement("span"); pill.className = "pill"; pill.textContent = "\u25B6 Play";
+    const vb = document.createElement("div"); vb.className = "votes"; vb.append(voteBtn(g.key, 1), voteBtn(g.key, -1));
+    t.append(pill, vb); iconObs.observe(t);
+    const m = document.createElement("div"); m.className = "meta";
+    const b = document.createElement("b"); b.textContent = g.name; b.title = g.name;
+    const s = document.createElement("small"); s.textContent = g.sub || g.cat;
+    m.append(b, s); c.append(t, m);
+    c.onclick = () => open(g);
+    c.onkeydown = e => { if (e.key === "Enter") open(g); };
     return c;
   }
+  function makeGrid(items) { const el = document.createElement("div"); el.className = "grid"; items.forEach(g => el.appendChild(card(g))); return el; }
   function render() {
-    chips();
-    var items = list(), grid = $("#grid");
-    $("#title").textContent = q ? "Search results" : view === "all" ? "All games" : view === "liked" ? "Liked games" : view === "recent" ? "Recently played" : view;
-    $("#count").textContent = items.length + (items.length === 1 ? " game" : " games");
+    chips(); iconObs.disconnect();
+    const items = list(), grid = $("#grid");
+    $("#title").textContent = q ? "Search results" : view === "all" ? "All games" : view === "liked" ? "Liked games" : view === "recent" ? "Recently played" : COLLS[view] ? COLLS[view].label : view;
+    $("#count").textContent = items.length.toLocaleString() + (items.length === 1 ? " game" : " games");
     grid.innerHTML = "";
+    const subs = COLLS[view] && !q ? [...new Set((coll[view] || []).map(g => g.sub).filter(Boolean))].sort() : [];
+    if (subs.length) {
+      const sel = document.createElement("select"); sel.className = "subsel";
+      [["", "All categories"]].concat(subs.map(x => [x, x])).forEach(p => { const o = document.createElement("option"); o.value = p[0]; o.textContent = p[1]; sel.appendChild(o); });
+      sel.value = sub; sel.onchange = () => { sub = sel.value; shown = PAGE; render(); };
+      grid.parentNode.insertBefore(sel, grid); [...document.querySelectorAll(".subsel")].slice(0, -1).forEach(x => x.remove());
+    } else document.querySelectorAll(".subsel").forEach(x => x.remove());
     $("#status").hidden = items.length > 0; grid.hidden = !items.length;
-    if (!items.length) $("#status").textContent = q ? "No games match that search." : view === "liked" ? "No liked games yet. Tap the heart on a game." : view === "recent" ? "Nothing played yet." : "No games found.";
-    items.slice(0, shown).forEach(function (g) { grid.appendChild(card(g)); });
+    if (!items.length) $("#status").textContent = q ? "No games match that search." : COLLS[view] ? (failed[view] ? "This collection couldn't be loaded. Try Reload in Settings." : "This collection is still loading\u2026") : view === "liked" ? "No liked games yet. Tap the thumbs up on a game." : view === "recent" ? "Nothing played yet." : "No games found.";
+    items.slice(0, shown).forEach(g => grid.appendChild(card(g)));
     $("#more").hidden = items.length <= shown;
   }
 
-  /* ---------- Player with automatic CDN failover ---------- */
-  async function play(g) {
-    current = g; var my = ++token, via = $("#via"), frame = $("#frame"), errs = [];
+  /* ---------- Player ---------- */
+  const describe = g => (descs[g.id] || g.desc) || `Play ${g.name} free in your browser. No ads, no downloads. ${BLURB[g.cat] || ""}${g.sub || (g.cat && g.cat !== "More Games") ? " Category: " + (g.sub || g.cat) + "." : ""}`.replace(/\s+/g, " ").trim();
+  function buildBelow(g) {
+    const below = $("#below"); below.innerHTML = "";
+    const about = document.createElement("section"); about.className = "about";
+    const h = document.createElement("h2"), p = document.createElement("p"); h.textContent = "About " + g.name; p.textContent = describe(g); about.append(h, p);
+    const pool = (g.coll ? (coll[g.coll] || []).filter(x => x.sub === g.sub) : games.filter(x => x.cat === g.cat)).filter(x => x.key !== g.key);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const rh = document.createElement("h2"); rh.textContent = "Related games";
+    const tiles = document.createElement("div"); tiles.className = "cat-tiles";
+    const tile = (label, fn) => { const b = document.createElement("button"); b.className = "cat-tile"; b.textContent = /games$/i.test(label) ? label : label + " games"; b.onclick = fn; tiles.appendChild(b); };
+    if (g.coll) tile(COLLS[g.coll].label, () => { closePlayer(); go(g.coll); });
+    cats().sort((a, b) => (b === g.cat) - (a === g.cat)).forEach(c => tile(c, () => { closePlayer(); go(c); }));
+    below.append(about, rh, makeGrid(pool.slice(0, 22)), tiles);
+  }
+  function open(g) { if (g.link) { window.open(g.url, "_blank", "noopener"); return; } play(g); }
+  async function play(g, reload) {
+    current = g; const my = ++token, via = $("#via"), frame = $("#frame"), errs = [];
     $("#ptitle").textContent = g.name; $("#player").hidden = false; document.body.style.overflow = "hidden";
-    recent = [g.key].concat(recent.filter(function (k) { return k !== g.key; })).slice(0, 24); ls.set("recent", recent);
-    try { history.replaceState(null, "", "#play=" + encodeURIComponent(g.key)); } catch (e) {}
-    frame.removeAttribute("srcdoc"); frame.src = "about:blank";
-    var urls = candidates(g.key);
-    for (var i = 0; i < urls.length; i++) {
-      var cdn = cdnOf(urls[i]);
-      via.textContent = "Trying " + cdn.name + "\u2026";
+    if (!reload) {
+      recent = [g.key].concat(recent.filter(k => k !== g.key)).slice(0, 24); ls.set("recent", recent);
+      $("#pvotes").replaceChildren(voteBtn(g.key, 1), voteBtn(g.key, -1));
+      buildBelow(g); $("#player").scrollTop = 0; chips();
+      try { history.replaceState(null, "", "#play=" + encodeURIComponent(g.key)); } catch (e) {}
+    }
+    frame.removeAttribute("srcdoc"); frame.src = "about:blank"; via.textContent = "";
+    if (g.swf) { frame.srcdoc = ruffleDoc(g.swf); return; }
+    if (g.ext) { frame.src = g.url; return; }
+    for (const u of order(g.urls || candidates(g.key))) {
+      const cdn = cdnOf(u); via.textContent = "Trying " + cdn.name + "\u2026";
       try {
-        var doc = await fetchOne(urls[i]);
+        const doc = await fetchOne(u);
         if (my !== token) return;
-        if (cdn.direct) { frame.removeAttribute("srcdoc"); frame.src = doc.url; } // GitHub Pages serves real HTML
-        else frame.srcdoc = injectBase(doc.text, doc.url);                       // other CDNs: run it from text, assets resolve via <base>
+        if (cdn.direct) { frame.removeAttribute("srcdoc"); frame.src = doc.url; } else frame.srcdoc = injectBase(doc.text, doc.url);
         via.textContent = "via " + cdn.name; return;
       } catch (e) { errs.push(cdn.name + ": " + (e.name === "AbortError" ? "timed out" : e.message)); }
     }
@@ -287,71 +487,70 @@ select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;p
   }
   function closePlayer() {
     token++; current = null; $("#player").hidden = true; document.body.style.overflow = "";
-    var f = $("#frame"); f.removeAttribute("srcdoc"); f.src = "about:blank";
+    const f = $("#frame"); f.removeAttribute("srcdoc"); f.src = "about:blank";
     if (document.fullscreenElement) document.exitFullscreen();
     try { history.replaceState(null, "", location.pathname); } catch (e) {}
-    if (view === "recent") render();
+    render();
   }
+  let pending = (location.hash.match(/^#play=(.+)/) || [])[1];
+  function tryPending() { if (pending && byKey[decodeURIComponent(pending)]) { const g = byKey[decodeURIComponent(pending)]; pending = null; open(g); } }
 
   /* ---------- Settings, panic key ---------- */
   function applySet() {
-    document.documentElement.dataset.theme = set.theme;
-    document.documentElement.style.setProperty("--min", set.size + "px");
-    document.querySelectorAll("#themeSeg .btn").forEach(function (b) { b.classList.toggle("on", b.dataset.v === set.theme); });
-    document.querySelectorAll("#sizeSeg .btn").forEach(function (b) { b.classList.toggle("on", +b.dataset.v === set.size); });
-    $("#keyBtn").textContent = (set.keys && set.keys[0]) || "`"; $("#hotkey").checked = !!set.hotkey;
-    saveSet();
+    document.documentElement.dataset.theme = set.theme; document.documentElement.style.setProperty("--min", set.size + "px");
+    document.querySelectorAll("#themeSeg .btn").forEach(b => b.classList.toggle("on", b.dataset.v === set.theme));
+    document.querySelectorAll("#sizeSeg .btn").forEach(b => b.classList.toggle("on", +b.dataset.v === set.size));
+    $("#keyBtn").textContent = (set.keys && set.keys[0]) || "`"; $("#hotkey").checked = !!set.hotkey; saveSet();
   }
   function combo(e) {
-    if (["Control", "Shift", "Alt", "Meta"].indexOf(e.key) > -1) return null;
-    var k = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3) : e.key === " " ? "Space" : e.key.length === 1 ? e.key.toUpperCase() : e.key;
+    if (["Control", "Shift", "Alt", "Meta"].includes(e.key)) return null;
+    const k = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3) : e.key === " " ? "Space" : e.key.length === 1 ? e.key.toUpperCase() : e.key;
     return [e.ctrlKey && "Ctrl", e.altKey && "Alt", e.shiftKey && "Shift", e.metaKey && "Meta", k].filter(Boolean).join("+");
   }
-  var recording = false;
-  document.addEventListener("keydown", function (e) {
-    if (recording) { e.preventDefault(); var c = combo(e); if (!c) return; recording = false; if (c !== "Escape") set.keys = [c]; applySet(); return; }
+  let recording = false;
+  document.addEventListener("keydown", e => {
+    if (recording) { e.preventDefault(); const c = combo(e); if (!c) return; recording = false; if (c !== "Escape") set.keys = [c]; applySet(); return; }
     if (e.key === "Escape") { if (!$("#settings").hidden) $("#settings").hidden = true; else if (!$("#player").hidden) closePlayer(); return; }
-    var c2 = combo(e), typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
-    if (c2 && set.hotkey && set.keys.indexOf(c2) > -1 && !(typing && !/Ctrl|Alt|Meta/.test(c2))) {
+    const c = combo(e), typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+    if (c && set.hotkey && set.keys.includes(c) && !(typing && !/Ctrl|Alt|Meta/.test(c))) {
       $("#frame").src = "about:blank";
       try { window.top.location.replace(PANIC_URL); } catch (err) { location.replace(PANIC_URL); }
     }
   });
 
   /* ---------- Wiring ---------- */
-  $("#q").addEventListener("input", function (e) { q = e.target.value.trim(); shown = PAGE; render(); });
-  $("#more").onclick = function () { shown += PAGE; render(); };
-  $("#logo").onclick = function () { view = "all"; q = ""; $("#q").value = ""; shown = PAGE; render(); };
+  $("#q").addEventListener("input", e => { q = e.target.value.trim(); shown = PAGE; render(); });
+  $("#more").onclick = () => { shown += PAGE; render(); };
+  $("#logo").onclick = () => go("all");
   $("#close").onclick = closePlayer;
-  $("#reload").onclick = function () { if (current) play(current); };
-  $("#full").onclick = function () { var f = $("#frame"); (f.requestFullscreen || f.webkitRequestFullscreen).call(f); };
-  $("#copy").onclick = function () { var b = $("#copy"); try { navigator.clipboard.writeText(location.href); } catch (e) {} b.textContent = "Copied"; setTimeout(function () { b.textContent = "Copy link"; }, 1500); };
-  $("#settingsBtn").onclick = function () { $("#settings").hidden = false; };
-  $("#sclose").onclick = function () { $("#settings").hidden = true; };
-  $("#themeSeg").onclick = function (e) { if (e.target.dataset.v) { set.theme = e.target.dataset.v; applySet(); } };
-  $("#sizeSeg").onclick = function (e) { if (e.target.dataset.v) { set.size = +e.target.dataset.v; applySet(); } };
-  $("#hotkey").onchange = function (e) { set.hotkey = e.target.checked; applySet(); };
-  $("#keyBtn").onclick = function () { recording = true; $("#keyBtn").textContent = "Press a key\u2026"; };
-  $("#clear").onclick = function () { votes = {}; recent = []; ls.set("votes", votes); ls.set("recent", recent); render(); };
-  $("#refresh").onclick = function () { init(true); };
+  $("#reload").onclick = () => { if (current) play(current, true); };
+  $("#full").onclick = () => { const f = $("#frame"); (f.requestFullscreen || f.webkitRequestFullscreen).call(f); };
+  $("#copy").onclick = () => { const b = $("#copy"); try { navigator.clipboard.writeText(location.href); } catch (e) {} b.textContent = "Copied"; setTimeout(() => { b.textContent = "Copy link"; }, 1500); };
+  $("#report").onclick = () => { try { navigator.clipboard.writeText("Broken game: " + (current ? current.name + " (" + current.key + ")" : "")); } catch (e) {} window.open(FORM, "_blank", "noopener"); };
+  $("#settingsBtn").onclick = () => { $("#settings").hidden = false; };
+  $("#sclose").onclick = () => { $("#settings").hidden = true; };
+  $("#themeSeg").onclick = e => { if (e.target.dataset.v) { set.theme = e.target.dataset.v; applySet(); } };
+  $("#sizeSeg").onclick = e => { if (e.target.dataset.v) { set.size = +e.target.dataset.v; applySet(); } };
+  $("#hotkey").onchange = e => { set.hotkey = e.target.checked; applySet(); };
+  $("#keyBtn").onclick = () => { recording = true; $("#keyBtn").textContent = "Press a key\u2026"; };
+  $("#clear").onclick = () => { votes = {}; recent = []; ls.set("votes", votes); ls.set("recent", recent); render(); };
+  $("#refresh").onclick = () => { ["files3", "ai5", "ugs3", "sel2", "six2"].forEach(ls.del); coll = {}; failed = {}; iconCache.clear(); init(true); };
   mountSelect($("#cdnPlayer")); mountSelect($("#cdnSet"));
 
   async function init(force) {
     $("#status").hidden = false; $("#grid").hidden = true; $("#status").textContent = "Loading games\u2026";
     try {
-      build(await loadList(force)); render();
-      var m = location.hash.match(/^#play=(.+)/);
-      if (m && byKey[decodeURIComponent(m[1])]) play(byKey[decodeURIComponent(m[1])]);
+      build(await loadList(force)); render(); tryPending();
+      loadOptional(); loadCollections();
     } catch (e) {
-      $("#status").innerHTML = "";
+      $("#status").textContent = "";
       $("#status").append("Couldn't load the game list (" + e.message + "). You may be offline or rate-limited. ");
-      var b = document.createElement("button"); b.className = "btn"; b.textContent = "Try again"; b.onclick = function () { init(true); };
+      const b = document.createElement("button"); b.className = "btn"; b.textContent = "Try again"; b.onclick = () => init(true);
       $("#status").append(document.createElement("br"), b);
     }
   }
-  window.addEventListener("error", function (e) { var st = $("#status"); st.hidden = false; st.textContent = "Something broke: " + e.message; });
-  applySet();
-  init();
+  window.addEventListener("error", e => { const st = $("#status"); st.hidden = false; st.textContent = "Something broke: " + e.message; });
+  applySet(); init();
 })();
 </script>
 </body>
