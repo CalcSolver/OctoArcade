@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#121212" />
-<title>Octo Music</title>
+<title>OctoFlow</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 <style>
 /* ===== Tokens ===== */
@@ -106,6 +106,14 @@ button{background:none;border:0;color:inherit;cursor:pointer}
 .modal input,.modal select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:#fff;font-size:15px}
 .mb{display:flex;gap:8px;justify-content:flex-end}.mb button{padding:10px 20px;border-radius:20px;font-weight:700}.ok{background:var(--accent);color:#000}.no{background:var(--hi)}
 .newpl{background:var(--accent);color:#000;border-radius:20px;padding:10px;font-weight:800;font-size:13px;display:flex;gap:8px;justify-content:center;align-items:center}
+/* ===== OctoFlow additions ===== */
+.sh{grid-column:1/-1;font-size:22px;font-weight:800;margin:14px 0 -2px;letter-spacing:-.5px}
+.tools{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.tools button{background:var(--hi);padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;transition:.2s}.tools button:hover{background:var(--accent);color:#000}
+.stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}.stat{background:var(--surface);border-radius:12px;padding:18px}.stat b{display:block;font-size:30px}.stat span{color:var(--sub);font-size:13px}
+.lst{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}.br{display:grid;grid-template-columns:minmax(80px,200px) 1fr 40px;gap:10px;align-items:center;font-size:13px}.br span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.br i{height:10px;border-radius:5px;background:var(--accent);transition:width .6s var(--ease)}.br em{color:var(--sub);font-style:normal}
+.keys{grid-column:1/-1;color:var(--sub);font-size:13px;line-height:2}.keys kbd{background:var(--hi);color:var(--text);padding:2px 7px;border-radius:5px;margin-right:4px}
+.full canvas{position:absolute;left:0;bottom:0;width:100%;height:30%;opacity:.45;pointer-events:none;z-index:-1}
+.modal small{color:var(--sub)}
 /* ===== Mobile (<768px) ===== */
 @media(max-width:767px){
  .app{display:flex;flex-direction:column;padding:0;gap:0}
@@ -128,6 +136,7 @@ button{background:none;border:0;color:inherit;cursor:pointer}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 <div id="bg"></div>
@@ -138,15 +147,15 @@ button{background:none;border:0;color:inherit;cursor:pointer}
 
 <div class="app" id="app">
   <aside class="side card">
-    <div class="brand"><i class="fa-solid fa-bolt"></i><span>Octo Music</span></div>
-    <div class="nav active" id="home"><i class="fa-solid fa-house"></i> Library</div>
+    <div class="brand"><i class="fa-solid fa-bolt"></i><span>OctoFlow</span></div>
+    <div class="nav active" id="home"><i class="fa-solid fa-house"></i> Home</div><div class="nav" id="favNav"><i class="fa-solid fa-heart"></i> Favorites</div><div class="nav" id="statNav"><i class="fa-solid fa-chart-simple"></i> Stats</div>
     <button class="newpl" id="newBtn"><i class="fa-solid fa-plus"></i> New Playlist</button>
-    <div class="pl-list" id="pls"><h4>Playlists</h4></div>
+    <div class="nav" id="reqNav"><i class="fa-solid fa-hand-holding-heart"></i> Request a song</div><div class="nav" id="impBtn"><i class="fa-solid fa-file-import"></i> Import playlist</div><input type="file" id="impFile" accept=".json" hidden /><div class="pl-list" id="pls"><h4>Playlists</h4></div>
   </aside>
 
   <main class="main card" id="main">
     <div class="top"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q" type="search" placeholder="What do you want to play?" /></div></div>
-    <div class="hero"><img id="heroImg" alt="" /><div><h1 id="heroT">Library</h1><p id="heroS">Loading…</p></div></div>
+    <div class="hero"><img id="heroImg" alt="" /><div><h1 id="heroT">Library</h1><p id="heroS">Loading…</p><div class="tools" id="tools"></div></div></div>
     <div class="grid" id="grid"></div>
   </main>
 
@@ -161,7 +170,7 @@ button{background:none;border:0;color:inherit;cursor:pointer}
   <footer class="bar card" id="bar">
     <div class="np" data-open-full><span class="spin"><img data-cover alt="" /></span><div style="min-width:0"><div class="t" data-title>Nothing playing</div><div class="a" data-artist>Pick a track</div></div></div>
     <div class="ctr"><div class="btns" data-controls></div><div class="seekrow"><span data-cur>0:00</span><div class="seek" data-seek><div class="fill"></div><div class="knob"></div></div><span data-rem>-0:00</span></div></div>
-    <div class="right"><button class="ic" data-act="lyrics" title="Lyrics"><i class="fa-solid fa-microphone-lines"></i></button><button class="ic" data-act="queue" title="Queue"><i class="fa-solid fa-list"></i></button><i class="fa-solid fa-volume-high" data-vicon style="color:var(--sub);margin:0 6px"></i><div class="seek vol" data-vol><div class="fill"></div><div class="knob"></div></div></div>
+    <div class="right"><button class="ic" data-act="fav" title="Favorite"><i class="fa-regular fa-heart"></i></button><button class="ic" data-act="lyrics" title="Lyrics"><i class="fa-solid fa-microphone-lines"></i></button><button class="ic" data-act="queue" title="Queue"><i class="fa-solid fa-list"></i></button><i class="fa-solid fa-volume-high" data-vicon style="color:var(--sub);margin:0 6px"></i><div class="seek vol" data-vol><div class="fill"></div><div class="knob"></div></div></div>
   </footer>
 </div>
 
@@ -171,12 +180,13 @@ button{background:none;border:0;color:inherit;cursor:pointer}
 <!-- Full Now Playing view -->
 <section class="full" id="full">
   <div class="head"><button class="ic" id="fullClose"><i class="fa-solid fa-chevron-down"></i></button><span data-status>Ready</span><span style="width:40px"></span></div>
-  <div class="big"><img data-cover alt="" /></div>
+  <canvas id="viz" width="640" height="200"></canvas><div class="big"><img data-cover alt="" /></div>
   <div class="fmeta"><div class="t" data-title>Nothing playing</div><div class="a" data-artist></div></div>
   <div class="seekrow" style="width:100%"><span data-cur>0:00</span><div class="seek" data-seek><div class="fill"></div><div class="knob"></div></div><span data-rem>-0:00</span></div>
   <div class="btns" data-controls></div>
-  <div class="sec"><button class="ic" data-act="lyrics"><i class="fa-solid fa-microphone-lines"></i></button><button class="ic" data-act="queue"><i class="fa-solid fa-list"></i></button><div class="vol-wrap" style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-volume-high" style="color:var(--sub)"></i><div class="seek vol" data-vol style="width:110px"><div class="fill"></div><div class="knob"></div></div></div></div>
+  <div class="sec"><button class="ic" data-act="fav"><i class="fa-regular fa-heart"></i></button><button class="ic" data-act="like" title="Like"><i class="fa-regular fa-thumbs-up"></i></button><button class="ic" data-act="dislike" title="Dislike"><i class="fa-regular fa-thumbs-down"></i></button><button class="ic" data-act="comments" title="Comments"><i class="fa-regular fa-comment"></i></button><button class="ic" data-act="lyrics"><i class="fa-solid fa-microphone-lines"></i></button><button class="ic" data-act="queue"><i class="fa-solid fa-list"></i></button><div class="vol-wrap" style="display:flex;align-items:center;gap:8px"><i class="fa-solid fa-volume-high" style="color:var(--sub)"></i><div class="seek vol" data-vol style="width:110px"><div class="fill"></div><div class="knob"></div></div></div></div>
 </section>
+<div class="ov" id="gMod"><div class="modal" id="gBody"></div></div>
 <audio id="audio" preload="metadata"></audio>
 
 <script>
@@ -189,8 +199,11 @@ const store={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch
 /* ============ STATE ============ */
 let library=[],playlists=store.get('octo_playlists',{Favorites:{tracks:[],image:''}}),activePl=null,shown=[];
 let queue=[],qi=-1,ctxOrder=[],shuffle=false,repeat='off',uid=0,addTarget=null,lastCur=null;
-const byUrl=new Map(),byUid=new Map(),audio=$('#audio');
+const byUrl=new Map(),byUid=new Map(),byFile=new Map(),audio=$('#audio');
 Object.keys(playlists).forEach(k=>{if(Array.isArray(playlists[k]))playlists[k]={tracks:playlists[k],image:''}}); // legacy format
+/* Local stats store: plays, likes, favorites, recents, comments, requests (no backend, so per-device) */
+let S=store.get('octo_stats',{});S={plays:{},likes:{},fav:{},recent:[],comments:{},reqs:[],sec:0,seen:{},...S};
+const saveS=()=>store.set('octo_stats',S),cur=()=>queue[qi];let view='home',lastT=0;
 
 /* ============ METADATA (iTunes Search API, cached, throttled) ============ */
 const META_KEY='octo_meta_v1',DAY=864e5;let meta=store.get(META_KEY,{}),saveT,mq=[],mBusy=false,backoff=0;
@@ -199,7 +212,7 @@ function fromFilename(name){ // fallback title/artist from "Artist - Title.mp3"
   const c=decodeURIComponent(name).replace(/\.[^/.]+$/,'').replace(/_/g,' ').trim(),p=c.split(' - ');
   return p.length>1?{artist:p[0].trim(),title:p.slice(1).join(' - ').trim()}:{artist:'Unknown Artist',title:c};
 }
-function makeTrack(o){const t={uid:++uid,state:'idle',cover:PLACEHOLDER,album:'',...o};byUrl.set(t.audio,t);byUid.set(t.uid,t);return t}
+function makeTrack(o){const t={uid:++uid,state:'idle',cover:PLACEHOLDER,album:'',...o};byUrl.set(t.audio,t);byFile.set(t.file,t);byUid.set(t.uid,t);return t}
 function applyMeta(t,m){if(m&&m.found){Object.assign(t,{title:m.title,artist:m.artist,album:m.album,cover:m.cover});t.state='done'}else t.state='missing';refreshViews(t)}
 function ensureMeta(t,priority){ // queue a lookup; cache hit resolves instantly
   if(t.state==='done'||t.state==='missing'||t.queued)return;
@@ -237,24 +250,35 @@ async function loadLibrary(){
   }catch{if(c)files=c.files}
   if(!files){$('#grid').innerHTML='<div class="msg">Failed to load library.</div>';return}
   library=files.map(f=>{const n=fromFilename(f),url=`https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${FOLDER}/${encodeURIComponent(f)}`;return makeTrack({file:f,audio:url,...n})});
-  showLibrary();
+  library.forEach(t=>S.seen[t.file]=S.seen[t.file]||Date.now());saveS();showLibrary();checkShare();
 }
 const resolve=t=>byUrl.get(t.audio)||makeTrack({file:t.title||'track',...t,state:t.cover?'done':'missing'});
 
 /* ============ VIEWS ============ */
-function showLibrary(){activePl=null;setHero('Library',`${library.length} tracks`,'');render(library);renderPls()}
-function openPl(n){activePl=n;const p=playlists[n];setHero(n,`${p.tracks.length} tracks`,p.image);render(p.tracks.map(resolve));renderPls()}
+function showLibrary(v){ // Home / Favorites / Stats views
+  view=typeof v==='string'?v:'home';activePl=null;$('#tools').innerHTML='';renderPls();
+  if(view==='stat')return showStats();
+  if(view==='fav'){const l=library.filter(t=>S.fav[t.file]);setHero('Favorites',`${l.length} liked songs`,'');return render(l)}
+  const by=f=>[...library].sort(f),P=t=>S.plays[t.file]||0;
+  setHero('OctoFlow',`${library.length} tracks`,'');
+  renderGroups([['Trending',by((a,b)=>P(b)-P(a)).filter(P).slice(0,10)],['Recently played',S.recent.map(f=>byFile.get(f)).filter(Boolean).slice(0,10)],['Recently added',by((a,b)=>(S.seen[b.file]||0)-(S.seen[a.file]||0)).slice(0,10)],['All songs',library]]);
+}
+function openPl(n){activePl=n;const p=playlists[n];setHero(n,`${p.tracks.length} tracks`,p.image);tools();render(p.tracks.map(resolve));renderPls()}
 function setHero(t,s,img){$('#heroT').textContent=t;$('#heroS').textContent=s;$('#heroImg').src=img||PLACEHOLDER}
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);ensureMeta(byUid.get(+e.target.dataset.u))}}),{rootMargin:'200px'});
-function render(list){
-  shown=list;const g=$('#grid');g.innerHTML='';
-  if(!list.length){g.innerHTML='<div class="msg">No tracks available.</div>';return}
-  const frag=document.createDocumentFragment();
-  list.forEach(t=>{
-    const d=document.createElement('div');d.className='tc';d.dataset.u=t.uid;
-    d.innerHTML=`<div class="acts"><button data-a="pl" title="Add to playlist"><i class="fa-solid fa-plus"></i></button><button data-a="q" title="Add to queue"><i class="fa-solid fa-list-ol"></i></button></div><div class="art"><img alt="" loading="lazy" /><div class="pb"><i class="fa-solid fa-play"></i></div></div><div class="t"></div><div class="a"></div>`;
-    d.onclick=e=>{const a=e.target.closest('[data-a]');if(!a)return playFrom(t,list);e.stopPropagation();a.dataset.a==='pl'?openAdd(t):enqueue(t)};
-    frag.appendChild(d);paintCard(d,t);io.observe(d);
+function render(list){renderGroups([[0,list]])}
+function renderGroups(gs){ // gs = [[sectionTitle, tracks], ...]
+  const g=$('#grid');g.innerHTML='';shown=gs[gs.length-1][1];
+  if(!gs.some(x=>x[1].length)){g.innerHTML='<div class="msg">No tracks available.</div>';return}
+  const frag=document.createDocumentFragment(),heart=t=>`<i class="fa-${S.fav[t.file]?'solid':'regular'} fa-heart"></i>`;
+  gs.forEach(([title,list])=>{
+    if(!list.length)return;if(title){const h=document.createElement('h2');h.className='sh';h.textContent=title;frag.appendChild(h)}
+    list.forEach(t=>{
+      const d=document.createElement('div');d.className='tc';d.dataset.u=t.uid;
+      d.innerHTML=`<div class="acts"><button data-a="pl" title="Add to playlist"><i class="fa-solid fa-plus"></i></button><button data-a="q" title="Add to queue"><i class="fa-solid fa-list-ol"></i></button><button data-a="fav" title="Favorite">${heart(t)}</button></div><div class="art"><img alt="" loading="lazy" /><div class="pb"><i class="fa-solid fa-play"></i></div></div><div class="t"></div><div class="a"></div>`;
+      d.onclick=e=>{const a=e.target.closest('[data-a]');if(!a)return playFrom(t,list);e.stopPropagation();const k=a.dataset.a;if(k==='pl')openAdd(t);else if(k==='q')enqueue(t);else{toggleFav(t);a.innerHTML=heart(t)}};
+      frag.appendChild(d);paintCard(d,t);io.observe(d);
+    });
   });
   g.appendChild(frag);
 }
@@ -270,7 +294,7 @@ function refreshViews(t){ // push updated metadata everywhere it is shown
 }
 function renderPls(){
   const box=$('#pls');box.innerHTML='<h4>Playlists</h4>';
-  $('#home').classList.toggle('active',!activePl);
+  [['home','#home'],['fav','#favNav'],['stat','#statNav']].forEach(([v,q])=>$(q).classList.toggle('active',!activePl&&view===v));
   Object.keys(playlists).forEach(n=>{
     const p=playlists[n],d=document.createElement('div');d.className='nav pl'+(activePl===n?' active':'');
     d.innerHTML=`<img alt="" src="${p.image||PLACEHOLDER}"><span></span><button class="del" title="Delete"><i class="fa-solid fa-trash"></i></button>`;
@@ -284,7 +308,7 @@ function savePls(){ // store slim tracks; metadata is re-resolved from cache
   const out={};for(const n in playlists)out[n]={image:playlists[n].image,tracks:playlists[n].tracks.map(t=>({audio:t.audio,title:t.title,artist:t.artist,cover:t.state==='done'?t.cover:''}))};
   store.set('octo_playlists',out);renderPls();
 }
-$('#home').onclick=showLibrary;
+$('#home').onclick=()=>showLibrary('home');$('#favNav').onclick=()=>showLibrary('fav');$('#statNav').onclick=()=>showLibrary('stat');$('#reqNav').onclick=requestModal;
 $('#q').oninput=e=>{const s=e.target.value.toLowerCase(),src=activePl?playlists[activePl].tracks.map(resolve):library;render(src.filter(t=>(t.title+' '+t.artist).toLowerCase().includes(s)))};
 
 /* ============ MODALS ============ */
@@ -313,7 +337,7 @@ function toast(){const b=$('[data-act=queue]');b.classList.add('on');setTimeout(
 function playAt(i){
   qi=i;const t=queue[i];if(!t)return;lastCur=t;
   audio.src=t.audio;audio.play().catch(()=>{});
-  ensureMeta(t,true);paintNow(t,true);renderQueue();$$('.tc').forEach(d=>d.classList.toggle('cur',byUid.get(+d.dataset.u)===t));loadLyrics(t);
+  initViz();t.counted=0;S.recent=[t.file,...S.recent.filter(f=>f!==t.file)].slice(0,30);saveS();ensureMeta(t,true);paintNow(t,true);paintActs();renderQueue();$$('.tc').forEach(d=>d.classList.toggle('cur',byUid.get(+d.dataset.u)===t));loadLyrics(t);
   if(queue[i+1])ensureMeta(queue[i+1]);
   if('mediaSession'in navigator)navigator.mediaSession.metadata=new MediaMetadata({title:t.title,artist:t.artist,album:t.album,artwork:[{src:t.cover}]});
 }
@@ -335,7 +359,7 @@ document.addEventListener('click',e=>{
   if(a==='play')toggle();else if(a==='next')next();else if(a==='prev')prev();
   else if(a==='shuffle'){shuffle=!shuffle;rebuildUpcoming();syncModes()}
   else if(a==='repeat'){repeat={off:'all',all:'one',one:'off'}[repeat];syncModes()}
-  else openPanel(a);
+  else if(a==='fav')toggleFav(cur());else if(a==='like')rate(cur(),1);else if(a==='dislike')rate(cur(),-1);else if(a==='comments')commentsModal(cur());else openPanel(a);
 });
 function syncModes(){
   $$('[data-act=shuffle]').forEach(b=>b.classList.toggle('on',shuffle));
@@ -349,7 +373,7 @@ function syncPlayUI(){
 function paintNow(t,fade){
   $$('[data-title]').forEach(e=>e.textContent=t.title);$$('[data-artist]').forEach(e=>e.textContent=t.artist);
   $$('[data-cover]').forEach(i=>{if(i.src!==t.cover){i.src=t.cover;i.onerror=()=>i.src=PLACEHOLDER;if(fade){i.classList.remove('fade');void i.offsetWidth;i.classList.add('fade')}}});
-  $('#bg').style.backgroundImage=`url("${t.cover}")`;document.title=`${t.title} • Octo Music`;
+  $('#bg').style.backgroundImage=`url("${t.cover}")`;document.title=`${t.title} • OctoFlow`;
 }
 
 /* ============ SEEK + VOLUME (pointer events: mouse + touch drag) ============ */
@@ -367,6 +391,8 @@ audio.volume=store.get('octo_vol',.8);paintVol();
 const fmt=s=>isFinite(s)?`${s/60|0}:${String(s%60|0).padStart(2,'0')}`:'0:00';
 audio.ontimeupdate=()=>{
   const d=audio.duration,c=audio.currentTime;if(!d)return;
+  const tk=cur();if(tk){S.sec+=Math.min(1,Math.max(0,c-lastT)); // listening time + play count (30s or 80%)
+    if(!tk.counted&&(c>=30||c>d*.8)){tk.counted=1;S.plays[tk.file]=(S.plays[tk.file]||0)+1;saveS()}}lastT=c;
   $$('[data-seek]').forEach(s=>{if(!s._d)setFill(s,c/d)});$$('[data-cur]').forEach(e=>e.textContent=fmt(c));$$('[data-rem]').forEach(e=>e.textContent='-'+fmt(d-c));
   $('#miniProg').style.width=c/d*100+'%';syncLyrics(c);
 };
@@ -442,10 +468,86 @@ function syncLyrics(c){ // highlight + auto-scroll current line
 const vh=()=>document.documentElement.style.setProperty('--app-h',(window.visualViewport?.height||innerHeight)+'px');
 vh();addEventListener('resize',vh);window.visualViewport?.addEventListener('resize',vh);
 if('mediaSession'in navigator){[['play',()=>audio.play()],['pause',()=>audio.pause()],['previoustrack',prev],['nexttrack',()=>next()]].forEach(([a,f])=>{try{navigator.mediaSession.setActionHandler(a,f)}catch{}})}
-addEventListener('keydown',e=>{if(e.target.matches('input,select'))return;if(e.code==='Space'){e.preventDefault();toggle()}});
+addEventListener('pagehide',saveS);
+const vol=d=>{audio.volume=Math.min(1,Math.max(0,audio.volume+d));store.set('octo_vol',audio.volume);paintVol()};
+const KEYS={s:'shuffle',r:'repeat',l:'like',d:'dislike',f:'fav',q:'queue',y:'lyrics'};
+addEventListener('keydown',e=>{ // keyboard shortcuts
+  if(e.target.matches('input,select,textarea')||e.ctrlKey||e.metaKey)return;const k=e.key.toLowerCase();
+  if(e.code==='Space'){e.preventDefault();toggle()}
+  else if(k==='arrowright')e.shiftKey?next():audio.currentTime+=5;else if(k==='arrowleft')e.shiftKey?prev():audio.currentTime-=5;
+  else if(k==='arrowup'){e.preventDefault();vol(.05)}else if(k==='arrowdown'){e.preventDefault();vol(-.05)}
+  else if(k==='m'){audio.muted=!audio.muted;paintVol()}else if(k==='v')$('#full').classList.toggle('open');
+  else if(k==='/'){e.preventDefault();$('#q').focus()}else if(KEYS[k])$(`[data-act=${KEYS[k]}]`).click();
+});
+/* ============ FAVORITES / LIKES ============ */
+function toggleFav(t){if(!t)return;S.fav[t.file]=S.fav[t.file]?0:1;saveS();paintActs()}
+function rate(t,v){if(!t)return;S.likes[t.file]=S.likes[t.file]===v?0:v;saveS();paintActs()}
+function paintActs(){
+  const t=cur(),f=t&&S.fav[t.file],l=t&&S.likes[t.file];
+  $$('[data-act=fav]').forEach(b=>{b.classList.toggle('on',!!f);b.innerHTML=`<i class="fa-${f?'solid':'regular'} fa-heart"></i>`});
+  $$('[data-act=like]').forEach(b=>{b.classList.toggle('on',l===1);b.innerHTML=`<i class="fa-${l===1?'solid':'regular'} fa-thumbs-up"></i>`});
+  $$('[data-act=dislike]').forEach(b=>{b.classList.toggle('on',l===-1);b.innerHTML=`<i class="fa-${l===-1?'solid':'regular'} fa-thumbs-down"></i>`});
+}
+/* ============ MODALS: comments, requests, share ============ */
+function modal(h){$('#gBody').innerHTML=h;$('#gMod').style.display='flex'}
+$('#gMod').onclick=e=>{if(e.target.id==='gMod'||e.target.closest('[data-x]'))$('#gMod').style.display='none'};
+function commentsModal(t){
+  if(!t)return;const c=S.comments[t.file]||[];
+  modal(`<h3>Comments · ${esc(t.title)}</h3><div style="max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:10px">${c.map(x=>`<div><small>${new Date(x.ts).toLocaleDateString()}</small><div>${esc(x.x)}</div></div>`).join('')||'<div class="state">No comments yet.</div>'}</div><input id="cmI" maxlength="280" placeholder="Add a comment…"><small>Comments are saved on this device.</small><div class="mb"><button class="no" data-x>Close</button><button class="ok" id="cmB">Post</button></div>`);
+  $('#cmB').onclick=()=>{const x=$('#cmI').value.trim();if(!x)return;(S.comments[t.file]=S.comments[t.file]||[]).push({x,ts:Date.now()});saveS();commentsModal(t)};
+}
+function requestModal(){
+  modal(`<h3>Request a song</h3><input id="rqI" placeholder="Artist – Song title"><small>Saved on this device and opens a prefilled GitHub issue so the owner can see it.</small><div class="mb"><button class="no" data-x>Cancel</button><button class="ok" id="rqB">Send</button></div>`);
+  $('#rqB').onclick=()=>{const x=$('#rqI').value.trim();if(!x)return;S.reqs.push({x,ts:Date.now()});saveS();open(`https://github.com/${REPO_USER}/${REPO_NAME}/issues/new?title=${encodeURIComponent('Song request: '+x)}`,'_blank');$('#gMod').style.display='none'};
+}
+/* ============ PLAYLIST IMPORT / EXPORT / SHARE / QR ============ */
+const filesOf=n=>playlists[n].tracks.map(t=>byUrl.get(t.audio)?.file).filter(Boolean);
+function tools(){$('#tools').innerHTML='<button data-t="share"><i class="fa-solid fa-share-nodes"></i> Share + QR</button><button data-t="export"><i class="fa-solid fa-file-export"></i> Export</button>'}
+$('#tools').onclick=e=>{const b=e.target.closest('[data-t]');if(!b||!activePl)return;b.dataset.t==='share'?shareModal(activePl):exportPl(activePl)};
+function exportPl(n){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({octoflow:1,name:n,files:filesOf(n)})],{type:'application/json'}));a.download=n+'.octoflow.json';a.click();URL.revokeObjectURL(a.href)}
+function importPl(name,files){
+  const tr=files.map(f=>byFile.get(f)).filter(Boolean);if(!tr.length)return alert('None of those songs exist in this library.');
+  let k=name||'Imported',i=2;const base=k;while(playlists[k])k=`${base} (${i++})`;
+  playlists[k]={tracks:tr,image:''};savePls();openPl(k);
+}
+$('#impBtn').onclick=()=>$('#impFile').click();
+$('#impFile').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());importPl(d.name,d.files||[])}catch{alert('Invalid playlist file.')}e.target.value=''};
+const shareUrl=n=>location.href.split('#')[0]+'#pl='+btoa(unescape(encodeURIComponent(JSON.stringify({n,f:filesOf(n)}))));
+function shareModal(n){
+  const u=shareUrl(n);
+  modal(`<h3>Share “${esc(n)}”</h3><input readonly id="shU" value="${esc(u)}"><div id="qr" style="display:grid;place-items:center;background:#fff;border-radius:12px;padding:12px;min-height:80px"></div><div class="mb"><button class="no" data-x>Close</button><button class="ok" id="cpy">Copy link</button></div>`);
+  try{new QRCode($('#qr'),{text:u,width:200,height:200,correctLevel:QRCode.CorrectLevel.L})}catch{$('#qr').innerHTML='<small style="color:#000">Too many songs for a QR code. Use the link or Export.</small>'}
+  $('#cpy').onclick=()=>{navigator.clipboard?.writeText(u);$('#cpy').textContent='Copied!'};
+}
+function checkShare(){ // open a shared link: #pl=...
+  const m=location.hash.match(/^#pl=(.+)/);if(!m)return;
+  try{const d=JSON.parse(decodeURIComponent(escape(atob(m[1]))));history.replaceState(null,'',location.pathname);if(confirm(`Import shared playlist "${d.n}" (${d.f.length} songs)?`))importPl(d.n,d.f)}catch{}
+}
+/* ============ STATISTICS DASHBOARD ============ */
+function showStats(){
+  setHero('Your stats','Listening activity on this device','');
+  const P=t=>S.plays[t.file]||0,top=library.filter(P).sort((a,b)=>P(b)-P(a)).slice(0,5),tot=Object.values(S.plays).reduce((a,b)=>a+b,0),ar={};
+  library.forEach(t=>{if(P(t))ar[t.artist]=(ar[t.artist]||0)+P(t)});const ta=Object.entries(ar).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const box=(n,l)=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`,row=(n,v,m)=>`<div class="br"><span>${esc(n)}</span><i style="width:${v/m*100}%"></i><em>${v}</em></div>`;
+  $('#grid').innerHTML=`<div class="stats">${box(library.length,'Songs')}${box(tot,'Plays')}${box((S.sec/3600).toFixed(1)+'h','Listened')}${box(Object.values(S.fav).filter(Boolean).length,'Favorites')}</div>
+  <h2 class="sh">Top songs</h2><div class="lst">${top.map(t=>row(t.title,P(t),P(top[0]))).join('')||'<div class="state">Play some songs to see stats.</div>'}</div>
+  <h2 class="sh">Top artists</h2><div class="lst">${ta.map(a=>row(a[0],a[1],ta[0][1])).join('')||'<div class="state">Nothing yet.</div>'}</div>
+  <h2 class="sh">Keyboard shortcuts</h2><div class="keys"><kbd>Space</kbd>play/pause <kbd>←</kbd><kbd>→</kbd>seek 5s <kbd>Shift+←/→</kbd>prev/next <kbd>↑</kbd><kbd>↓</kbd>volume <kbd>M</kbd>mute <kbd>S</kbd>shuffle <kbd>R</kbd>repeat <kbd>F</kbd>favorite <kbd>L</kbd>like <kbd>D</kbd>dislike <kbd>Q</kbd>queue <kbd>Y</kbd>lyrics <kbd>V</kbd>full view <kbd>/</kbd>search</div>`;
+}
+/* ============ VISUALIZER (Web Audio analyser) ============ */
+let an,actx,vdata;const cv=$('#viz'),g2=cv.getContext('2d');
+function initViz(){
+  if(actx){actx.state==='suspended'&&actx.resume();return}
+  try{actx=new(window.AudioContext||webkitAudioContext)();const src=actx.createMediaElementSource(audio);an=actx.createAnalyser();an.fftSize=128;src.connect(an);an.connect(actx.destination);vdata=new Uint8Array(an.frequencyBinCount)}catch{actx=null}
+}
+function draw(){
+  requestAnimationFrame(draw);if(!an||audio.paused||!$('#full').classList.contains('open'))return; // only runs when visible
+  an.getByteFrequencyData(vdata);g2.clearRect(0,0,640,200);const w=640/vdata.length;g2.fillStyle='#1ed760';
+  vdata.forEach((v,i)=>{const h=v/255*190;g2.fillRect(i*w+2,200-h,w-4,h)});
+}
 
 /* ============ INIT ============ */
-document.body.classList.add('paused');syncModes();renderPls();renderQueue();setHero('Library','Loading…','');loadLibrary();
+document.body.classList.add('paused');syncModes();renderPls();renderQueue();setHero('OctoFlow','Loading…','');audio.crossOrigin='anonymous';draw();loadLibrary();
 </script>
 </body>
 </html>
