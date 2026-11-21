@@ -118,7 +118,7 @@ button{background:none;border:0;color:inherit;cursor:pointer}
 [data-theme=light]{--bg:#f4f4f6;--surface:#fff;--hi:#e6e6ea;--text:#111;--sub:#555;--glass:rgba(255,255,255,.78);--line:rgba(0,0,0,.1)}
 [data-theme=light] #bg{filter:blur(70px) saturate(1.3) brightness(1.2)}[data-theme=light] .full{background:#f4f4f6dd}
 #toast{position:fixed;left:50%;bottom:calc(110px + var(--safe));transform:translate(-50%,20px);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:20px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.3s var(--ease);z-index:99}#toast.on{opacity:1;transform:translate(-50%,0)}
-.promo{display:flex;align-items:center;gap:14px;padding:16px 36px 16px 20px;margin-bottom:20px;background:linear-gradient(120deg,#7c3aed66,#06b6d466);position:relative;flex-wrap:wrap}.promo b{display:block;font-size:17px}.promo span{color:var(--sub);font-size:13px}.promo>div{flex:1;min-width:200px}
+.promo{margin-top:28px!important;display:flex;align-items:center;gap:14px;padding:16px 36px 16px 20px;margin-bottom:20px;background:linear-gradient(120deg,#7c3aed66,#06b6d466);position:relative;flex-wrap:wrap}.promo b{display:block;font-size:17px}.promo span{color:var(--sub);font-size:13px}.promo>div{flex:1;min-width:200px}
 .promo a{background:var(--text);color:var(--bg);padding:10px 18px;border-radius:20px;font-weight:800;font-size:13px;text-decoration:none;white-space:nowrap;transition:transform .2s}.promo a:hover{transform:scale(1.05)}.promo .x{position:absolute;top:6px;right:10px;color:var(--sub);font-size:16px}
 .panel.lyfull{position:fixed;inset:0;width:100%!important;height:100%!important;z-index:60;border-radius:0;transform:none!important;background:var(--bg)}
 .lyfull .ly{font-size:clamp(26px,5vw,56px);text-align:center;padding:30vh 6vw}.lyfull .ly p{transform-origin:center}
@@ -161,14 +161,14 @@ button{background:none;border:0;color:inherit;cursor:pointer}
     <div class="brand"><i class="fa-solid fa-bolt"></i><span>OctoFlow</span></div>
     <div class="nav active" id="home"><i class="fa-solid fa-house"></i> Home</div><div class="nav" id="favNav"><i class="fa-solid fa-heart"></i> Favorites</div><div class="nav" id="statNav"><i class="fa-solid fa-chart-simple"></i> Stats</div>
     <button class="newpl" id="newBtn"><i class="fa-solid fa-plus"></i> New Playlist</button>
-    <div class="nav" id="snkNav"><i class="fa-solid fa-gamepad"></i> Eat This Playlist</div><div class="nav" id="profNav"><i class="fa-solid fa-user"></i> Profile</div><div class="nav" id="instNav"><i class="fa-solid fa-download"></i> Install app</div><div class="nav" id="reqNav"><i class="fa-solid fa-hand-holding-heart"></i> Request a song</div><div class="nav" id="impBtn"><i class="fa-solid fa-file-import"></i> Import playlist</div><input type="file" id="impFile" accept=".json" hidden /><div class="pl-list" id="pls"><h4>Playlists</h4></div>
+    <div id="moreBox" hidden><div class="nav" id="snkNav"><i class="fa-solid fa-gamepad"></i> Eat This Playlist</div><div class="nav" id="profNav"><i class="fa-solid fa-user"></i> Profile</div><div class="nav" id="instNav"><i class="fa-solid fa-download"></i> Install app</div></div><div class="nav" id="reqNav"><i class="fa-solid fa-hand-holding-heart"></i> Request a song</div><div class="nav" id="impBtn"><i class="fa-solid fa-file-import"></i> Import playlist</div><div class="nav" id="moreNav"><i class="fa-solid fa-ellipsis"></i> More</div><input type="file" id="impFile" accept=".json" hidden /><div class="pl-list" id="pls"><h4>Playlists</h4></div>
   </aside>
 
   <main class="main card" id="main">
     <div class="top"><div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="q" type="search" placeholder="What do you want to play?" /></div></div>
-    <div class="promo card" id="promo"><button class="x" title="Dismiss">✕</button><div><b>🐙 Like OctoFlow?</b><span>Explore games, AI tools, experiments, apps, and more on OctoArcade.</span></div><a href="https://github.com/CalcSolver/OctoArcade" target="_blank" rel="noopener" id="promoA">Explore OctoArcade →</a></div>
-    <div class="hero"><img id="heroImg" alt="" /><div><h1 id="heroT">Library</h1><p id="heroS">Loading…</p><div class="tools" id="tools"></div></div></div>
+        <div class="hero"><img id="heroImg" alt="" /><div><h1 id="heroT">Library</h1><p id="heroS">Loading…</p><div class="tools" id="tools"></div></div></div>
     <div class="grid" id="grid"></div>
+    <div class="promo card" id="promo"><button class="x" title="Dismiss">✕</button><div><b>🐙 Like OctoFlow?</b><span>Explore games, AI tools, experiments, apps, and more on OctoArcade.</span></div><a href="https://github.com/CalcSolver/OctoArcade" target="_blank" rel="noopener" id="promoA">Explore OctoArcade →</a></div>
   </main>
 
   <!-- Queue / Lyrics panel -->
@@ -207,7 +207,7 @@ button{background:none;border:0;color:inherit;cursor:pointer}
 /* ============ CONFIG ============ */
 const REPO_USER='CalcSolver',REPO_NAME='OctoArcade',BRANCH='main',FOLDER='Songs/MP3s';
 /* Internet Archive item identifiers (the part after archive.org/details/). Add as many as you like. */
-const IA_ITEMS=['YOUR-ARCHIVE-ITEM-ID'];
+const IA_ITEMS=['ofa_20261121'];
 const PROMO_URL='https://github.com/CalcSolver/OctoArcade';
 const PLACEHOLDER='data:image/svg+xml;utf8,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#282828'/><path d='M62 24v38a10 10 0 1 1-6-9V32l-22 5v32a10 10 0 1 1-6-9V30z' fill='#555'/></svg>");
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -264,33 +264,36 @@ async function lookup(t){
 /* ============ LIBRARY (GitHub repo auto-discovery) ============ */
 async function loadLibrary(){
   $('#grid').innerHTML='<div class="msg"><i class="fa-solid fa-spinner fa-spin"></i> Syncing library…</div>';
-  const all=[];
+  const all=[];let why='';
   for(const id of IA_ITEMS){
     const key='octo_ia_'+id,c=store.get(key,null);let files=c&&Date.now()-c.ts<6e5?c.files:null; // 10-minute cache
-    try{if(!files){const r=await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`);if(!r.ok)throw 0;const d=await r.json();
+    try{if(!files){const r=await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`);if(!r.ok)throw new Error('Archive.org answered HTTP '+r.status);const d=await r.json();
       const seen={};files=(d.files||[]).filter(f=>/\.(mp3|m4a|ogg)$/i.test(f.name)&&!/sample|spectrogram/i.test(f.format||'')).sort((a,b)=>/mp3$/i.test(b.name)-/mp3$/i.test(a.name))
         .filter(f=>{const k=f.name.replace(/\.[^.]+$/,'');return seen[k]?0:(seen[k]=1)}) // one file per song, prefer MP3
-        .map(f=>({id,name:f.name,title:f.title,artist:f.artist||f.creator,album:f.album,len:parseFloat(f.length)||0,year:String(f.date||f.year||'').slice(0,4),mtime:(+f.mtime||0)*1e3}));
-      if(!files.length)throw 0;store.set(key,{ts:Date.now(),files})}}
-    catch{files=c?c.files:[]}
+        .map(f=>({id,name:f.name,title:f.title,artist:f.artist||f.creator,album:f.album,len:(v=>{v=String(v||'');return v.includes(':')?v.split(':').reduce((a,b)=>a*60+ +b,0):parseFloat(v)||0})(f.length),year:String(f.date||f.year||'').slice(0,4),mtime:(+f.mtime||0)*1e3}));
+      if(!files.length)throw new Error('No MP3 files found in that item');store.set(key,{ts:Date.now(),files})}}
+    catch(e){why=String(e&&e.message||e);files=c?c.files:[]}
     all.push(...files);
   }
-  if(!all.length){$('#grid').innerHTML='<div class="msg">Couldn’t load songs from the Internet Archive.<br><small>Check IA_ITEMS at the top of the script and that the item is public.</small></div>';return}
+  if(!all.length){$('#grid').innerHTML='<div class="msg">Couldn’t load songs from the Internet Archive.<br><small>Check IA_ITEMS at the top of the script and that the item is public.<br>'+esc(why)+'</small></div>';return}
   library=all.map(f=>makeTrack({file:f.name,audio:`https://archive.org/download/${f.id}/${encodeURIComponent(f.name)}`,...fromFilename(f.name),...(f.title?{title:f.title}:{}),...(f.artist?{artist:f.artist}:{}),ia:f,dur:f.len,year:f.year,added:f.mtime}));
-  library.forEach(t=>S.seen[t.file]=S.seen[t.file]||Date.now());saveS();showLibrary();checkShare();
+  library.forEach(t=>S.seen[t.file]=S.seen[t.file]||Date.now());Object.values(playlists).forEach(p=>p.tracks=p.tracks.map(t=>findTrack(t)||t));saveS();showLibrary();checkShare();
 }
-const resolve=t=>byUrl.get(t.audio)||makeTrack({file:t.title||'track',...t,state:t.cover?'done':'missing'});
+const baseOf=u=>{try{return decodeURIComponent(String(u).split('/').pop())}catch{return ''}};
+const findTrack=t=>byUrl.get(t.audio)||byFile.get(baseOf(t.audio))||library.find(x=>t.title&&norm(x.title)===norm(t.title));
+const resolve=t=>findTrack(t)||makeTrack({file:t.title||'track',...t,cover:t.cover||PLACEHOLDER,state:t.cover?'done':'missing'});
+const PLAYBTN='<button data-t="all"><i class="fa-solid fa-play"></i> Play all</button><button data-t="shuf"><i class="fa-solid fa-shuffle"></i> Shuffle</button>';
 
 /* ============ VIEWS ============ */
 function showLibrary(v){ // Home / Favorites / Stats views
-  view=typeof v==='string'?v:'home';activePl=null;$('#tools').innerHTML='';renderPls();
+  view=typeof v==='string'?v:'home';activePl=null;$('#tools').innerHTML=view==='stat'?'':PLAYBTN;renderPls();
   if(view==='stat')return showStats();
   if(view==='fav'){const l=library.filter(t=>S.fav[t.file]);setHero('Favorites',`${l.length} liked songs`,'');return render(l)}
   const by=f=>[...library].sort(f),P=t=>S.plays[t.file]||0;
   setHero('OctoFlow',`${library.length} tracks`,'');
   const R=S.resume&&byFile.get(S.resume.file),ap={},ad=t=>t.added||S.seen[t.file]||0;library.forEach(t=>ap[t.artist]=(ap[t.artist]||0)+P(t));
-  const rec=library.filter(t=>!P(t)&&ap[t.artist]>0).concat(by(()=>Math.random()-.5).filter(t=>!P(t))).filter((t,i,a)=>a.indexOf(t)===i).slice(0,10); // same artists as your plays, then random
-  renderGroups([['Continue listening',R?[R]:[]],['Trending',by((a,b)=>P(b)-P(a)).filter(P).slice(0,10)],['Recently played',S.recent.map(f=>byFile.get(f)).filter(Boolean).slice(0,10)],['Recommended for you',rec],['New releases',by((a,b)=>(+b.year||0)-(+a.year||0)).filter(t=>+t.year).slice(0,10)],['Recently added',by((a,b)=>ad(b)-ad(a)).slice(0,10)],['All songs',library]]);
+  const rec=library.filter(t=>!P(t)&&ap[t.artist]>0).concat(by(()=>Math.random()-.5).filter(t=>!P(t))).filter((t,i,a)=>a.indexOf(t)===i).slice(0,6); // same artists as your plays, then random
+  renderGroups([['Continue listening',R?[R]:[]],['Trending',by((a,b)=>P(b)-P(a)).filter(P).slice(0,6)],['Recently played',S.recent.map(f=>byFile.get(f)).filter(Boolean).slice(0,6)],['Recommended for you',rec],['New releases',by((a,b)=>(+b.year||0)-(+a.year||0)).filter(t=>+t.year).slice(0,6)],['Recently added',by((a,b)=>ad(b)-ad(a)).slice(0,6)],['All songs',library]]);
 }
 function openPl(n){activePl=n;const p=playlists[n];setHero(n,`${p.tracks.length} tracks`,p.image);tools();render(p.tracks.map(resolve));renderPls()}
 function setHero(t,s,img){$('#heroT').textContent=t;$('#heroS').textContent=s;$('#heroImg').src=img||PLACEHOLDER}
@@ -542,9 +545,11 @@ function requestModal(){
   $('#rqB').onclick=()=>{const x=$('#rqI').value.trim();if(!x)return;S.reqs.push({x,ts:Date.now(),v:1});saveS();open(`https://github.com/${REPO_USER}/${REPO_NAME}/issues/new?title=${encodeURIComponent('Song request: '+x)}`,'_blank');requestModal()};
 }
 /* ============ PLAYLIST IMPORT / EXPORT / SHARE / QR ============ */
-const filesOf=n=>playlists[n].tracks.map(t=>byUrl.get(t.audio)?.file).filter(Boolean);
-function tools(){$('#tools').innerHTML='<button data-t="share"><i class="fa-solid fa-share-nodes"></i> Share + QR</button><button data-t="export"><i class="fa-solid fa-file-export"></i> Export</button>'}
-$('#tools').onclick=e=>{const b=e.target.closest('[data-t]');if(!b||!activePl)return;b.dataset.t==='share'?shareModal(activePl):exportPl(activePl)};
+const filesOf=n=>playlists[n].tracks.map(t=>findTrack(t)?.file).filter(Boolean);
+function tools(){$('#tools').innerHTML=PLAYBTN+'<button data-t="share"><i class="fa-solid fa-share-nodes"></i> Share + QR</button><button data-t="export"><i class="fa-solid fa-file-export"></i> Export</button>'}
+$('#tools').onclick=e=>{const b=e.target.closest('[data-t]');if(!b)return;const k=b.dataset.t,src=activePl?playlists[activePl].tracks.map(resolve):library;
+  if(k==='share'&&activePl)shareModal(activePl);else if(k==='export'&&activePl)exportPl(activePl);
+  else if(src.length&&(k==='all'||k==='shuf')){shuffle=k==='shuf';syncModes();playFrom(shuffle?src[Math.random()*src.length|0]:src[0],src)}};
 function exportPl(n){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({octoflow:1,name:n,files:filesOf(n)})],{type:'application/json'}));a.download=n+'.octoflow.json';a.click();URL.revokeObjectURL(a.href)}
 function importPl(name,files){
   const tr=files.map(f=>byFile.get(f)).filter(Boolean);if(!tr.length)return alert('None of those songs exist in this library.');
@@ -690,6 +695,8 @@ function snakeGame(){
   };
   $('#rs').onclick=reset;reset();ti=setInterval(step,110);
 }
+$('#moreNav').onclick=()=>{modal(`<h3>More</h3><div class="pl-list">${[['snkNav','gamepad','Eat This Playlist'],['profNav','user','Profile, themes &amp; achievements'],['instNav','download','Install OctoFlow']].map(([i,ic,l])=>`<div class="nav" data-go="${i}"><i class="fa-solid fa-${ic}"></i> ${l}</div>`).join('')}</div><div class="mb"><button class="no" data-x>Close</button></div>`);
+  $$('[data-go]').forEach(b=>b.onclick=()=>{$('#gMod').style.display='none';$('#'+b.dataset.go).click()})};
 $('#snkNav').onclick=snakeGame;$('#profNav').onclick=profileModal;$('#instNav').onclick=installModal;
 if(S.promoX)$('#promo').remove();else{$('#promoA').href=PROMO_URL;$('#promo .x').onclick=()=>{S.promoX=1;saveS();$('#promo').remove()}}
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
