@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Octo Music - Spotify Pro Edition</title>
+  <title>Octo Music - Archive Primary Edition</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     :root {
@@ -54,7 +54,7 @@
     .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 13px; }
 
     .hero-banner { display: flex; align-items: center; gap: 24px; margin-bottom: 28px; }
-    .hero-banner img { width: 120px; height: 120px; border-radius: 8px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .hero-banner img { width: 120px; height: 120px; border-radius: 8px; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.5); background: #181818; }
     .hero-banner h1 { font-size: 32px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
     .hero-banner p { color: var(--text-sub); font-size: 13px; }
 
@@ -67,8 +67,8 @@
     .track-card { background: #181818; padding: 14px; border-radius: 6px; cursor: pointer; transition: background 0.2s; position: relative; display: flex; flex-direction: column; }
     .track-card:hover { background: #282828; }
     
-    .card-img-wrap { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 4px; overflow: hidden; margin-bottom: 12px; background: #000; }
-    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .card-img-wrap { position: relative; width: 100%; aspect-ratio: 1/1; border-radius: 4px; overflow: hidden; margin-bottom: 12px; background: #141414; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
     
     .play-btn-overlay { position: absolute; right: 8px; bottom: 8px; width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; opacity: 0; transform: translateY(8px); transition: all 0.2s ease; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
     .track-card:hover .play-btn-overlay { opacity: 1; transform: translateY(0); }
@@ -174,17 +174,17 @@
       </div>
 
       <div class="hero-banner">
-        <img id="bannerImg" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=60" />
+        <img id="bannerImg" src="" alt="Library Cover" />
         <div>
-          <h1 id="feedTitle">Soundcharts Hub</h1>
-          <p id="feedSub">Instant metadata load • Audio streams on click</p>
+          <h1 id="feedTitle">Archive Music Hub</h1>
+          <p id="feedSub">Internet Archive primary • GitHub CDN backup • Audio streams on click</p>
         </div>
       </div>
 
       <!-- Grid View -->
       <div class="view-container" id="gridViewContainer">
         <div class="track-grid" id="trackGrid">
-          <div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading track list & metadata...</div>
+          <div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading track metadata from Archive...</div>
         </div>
       </div>
 
@@ -200,7 +200,7 @@
 
   <footer class="player-bar">
     <div class="player-left">
-      <img id="currImg" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' fill='%23181818'><rect width='56' height='56'/></svg>" />
+      <img id="currImg" src="" alt="Track Cover" />
       <div>
         <div class="title" id="currTitle">No track playing</div>
         <div class="artist" id="currArtist">-</div>
@@ -236,25 +236,46 @@
   <audio id="audioEngine" preload="none"></audio>
 
   <script>
+    // Reliable built-in cover fallback (no broken external URLs)
+    const DEFAULT_COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#1db954"/>
+            <stop offset="55%" stop-color="#162a20"/>
+            <stop offset="100%" stop-color="#121212"/>
+          </linearGradient>
+        </defs>
+        <rect width="300" height="300" fill="url(#g)"/>
+        <circle cx="150" cy="135" r="54" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+        <path d="M140 114 L172 135 L140 156 Z" fill="#ffffff"/>
+        <text x="150" y="226" text-anchor="middle" fill="#ffffff" font-family="system-ui,sans-serif" font-size="18" font-weight="800" letter-spacing="1">OCTO MUSIC</text>
+      </svg>
+    `);
+
+    // Primary source: Internet Archive item identifiers
+    // Add archive.org item identifiers here to pull MP3s + cover art from Internet Archive
+    const ARCHIVE_ITEMS = [];
+
+    // Backup source: GitHub repository
     const REPO_USER = 'CalcSolver';
     const REPO_NAME = 'OctoArcade';
     const BRANCH = 'main';
     const FOLDER_NAME = 'Songs/MP3s';
 
-    // Multi-CDN gateways (no raw githack)
-    const CDN_PROVIDERS = [
+    const GITHUB_BACKUP_CDNS = [
       (filePath) => `https://cdn.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${filePath}`,
       (filePath) => `https://cdn.statically.io/gh/${REPO_USER}/${REPO_NAME}/${BRANCH}/${filePath}`,
       (filePath) => `https://fastly.jsdelivr.net/gh/${REPO_USER}/${REPO_NAME}@${BRANCH}/${filePath}`
     ];
 
-    // Soundcharts API v2.25 Metadata Cache mapping
+    // Soundcharts API v2.25 metadata cache
     const SOUNDCHARTS_METADATA_CACHE = {
       "ballroomblitz": {
         "object": {
           "name": "Ballroom Blitz",
           "creditName": "Sweet",
-          "imageUrl": "https://upload.wikimedia.org/wikipedia/en/2/27/Sweet_Ballroom_Blitz_single_cover.jpg",
+          "imageUrl": DEFAULT_COVER,
           "lyrics": "Are you ready, Steve?\nUh-huh\nAndy? Yeah\nScotty? Ready\nAll right, fellas, let's go!"
         }
       },
@@ -286,6 +307,7 @@
     const currTitle = document.getElementById('currTitle');
     const currArtist = document.getElementById('currArtist');
     const currImg = document.getElementById('currImg');
+    const bannerImg = document.getElementById('bannerImg');
     const progressFill = document.getElementById('progressFill');
     const progressBar = document.getElementById('progressBar');
     const playlistList = document.getElementById('playlistList');
@@ -294,6 +316,10 @@
     const gridViewContainer = document.getElementById('gridViewContainer');
     const lyricsViewContainer = document.getElementById('lyricsViewContainer');
     const lyricsText = document.getElementById('lyricsText');
+
+    // Set safe default images immediately
+    bannerImg.src = DEFAULT_COVER;
+    currImg.src = DEFAULT_COVER;
 
     Object.keys(userPlaylists).forEach(k => {
       if (Array.isArray(userPlaylists[k])) {
@@ -314,7 +340,7 @@
         li.className = `playlist-item ${activePlaylist === name ? 'active' : ''}`;
         li.innerHTML = `
           <div class="pl-info" style="flex:1;">
-            <img src="${plData.image || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60'}" />
+            <img src="${plData.image || DEFAULT_COVER}" onerror="this.src='${DEFAULT_COVER}'" />
             <span>${name}</span>
           </div>
           <i class="fa-solid fa-trash" style="font-size:11px; color:var(--text-sub); padding:4px;" title="Delete"></i>
@@ -329,7 +355,7 @@
           if (confirm(`Delete playlist "${name}"?`)) {
             delete userPlaylists[name];
             savePlaylists();
-            if (activePlaylist === name) loadGitHubLibrary();
+            if (activePlaylist === name) loadLibraryView();
           }
         };
 
@@ -337,94 +363,173 @@
       });
     }
 
-    // Loads only name + metadata right away (zero audio network requests on startup)
-    function parseTrackMetadata(fileObj) {
-      const cleanSlug = fileObj.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    function formatFromFilename(fileName) {
+      let cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]+/g, " ").trim();
+      let parts = cleanName.split(' - ');
+      return {
+        title: parts.length > 1 ? parts.slice(1).join(' - ').trim() : cleanName,
+        artist: parts.length > 1 ? parts[0].trim() : 'Unknown Artist'
+      };
+    }
+
+    function applyMetadataEnrichment(fileName, fallbackTitle, fallbackArtist, fallbackCover) {
+      const cleanSlug = fileName.toLowerCase().replace(/[^a-z0-9]/g, '');
       const cached = SOUNDCHARTS_METADATA_CACHE[cleanSlug];
 
       if (cached && cached.object) {
         return {
-          title: cached.object.name,
-          artist: cached.object.creditName || "Unknown Artist",
-          cover: cached.object.imageUrl,
+          title: cached.object.name || fallbackTitle,
+          artist: cached.object.creditName || fallbackArtist,
+          cover: cached.object.imageUrl || fallbackCover || DEFAULT_COVER,
           lyrics: cached.object.lyrics || "No synchronized lyrics available for this track."
         };
       }
 
-      let cleanName = fileObj.name.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ");
-      let parts = cleanName.split(' - ');
       return {
-        title: parts.length > 1 ? parts[1] : parts[0],
-        artist: parts.length > 1 ? parts[0] : 'Unknown Artist',
-        cover: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=60',
+        title: fallbackTitle,
+        artist: fallbackArtist,
+        cover: fallbackCover || DEFAULT_COVER,
         lyrics: "Instrumental or lyrics not found."
       };
     }
 
-    async function autoDiscoverMP3s() {
+    // 1. Primary: Fetch metadata + MP3s + cover art from Internet Archive API
+    async function loadFromInternetArchive() {
+      if (!ARCHIVE_ITEMS.length) return [];
+
+      const tracks = [];
+      for (const itemId of ARCHIVE_ITEMS) {
+        try {
+          const res = await fetch(`https://archive.org/metadata/${encodeURIComponent(itemId)}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          const files = Array.isArray(data.files) ? data.files : [];
+          const itemMeta = data.metadata || {};
+
+          // Find best cover image inside the Archive item
+          const imgFile = files.find(f => /\.(jpe?g|png|webp)$/i.test(f.name || ''));
+          const itemCover = imgFile
+            ? `https://archive.org/download/${encodeURIComponent(itemId)}/${encodeURIComponent(imgFile.name)}`
+            : `https://archive.org/services/img/${encodeURIComponent(itemId)}`;
+
+          const mp3Files = files.filter(f => /\.mp3$/i.test(f.name || ''));
+          for (const mp3 of mp3Files) {
+            const parsed = formatFromFilename(mp3.name);
+            const title = mp3.title || (mp3Files.length === 1 && itemMeta.title) || parsed.title;
+            const artist = mp3.artist || itemMeta.creator || parsed.artist;
+            const enriched = applyMetadataEnrichment(mp3.name, title, artist, itemCover);
+
+            tracks.push({
+              id: `ia:${itemId}/${mp3.name}`,
+              title: enriched.title,
+              artist: enriched.artist,
+              cover: enriched.cover,
+              lyrics: enriched.lyrics,
+              archiveUrl: `https://archive.org/download/${encodeURIComponent(itemId)}/${encodeURIComponent(mp3.name)}`,
+              githubPath: `${FOLDER_NAME}/${mp3.name}`,
+              audio: null // Loaded on click
+            });
+          }
+        } catch (err) {
+          console.warn(`Archive item lookup failed for ${itemId}:`, err);
+        }
+      }
+      return tracks;
+    }
+
+    // 2. Backup: Fetch track list + metadata from GitHub repository
+    async function loadFromGitHubBackup() {
+      const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/${FOLDER_NAME}`);
+      if (!apiRes.ok) throw new Error('GitHub API request failed');
+
+      const files = await apiRes.json();
+      const mp3Files = files.filter(f => f.name.toLowerCase().includes('.mp3'));
+
+      return mp3Files.map(file => {
+        const parsed = formatFromFilename(file.name);
+        const enriched = applyMetadataEnrichment(file.name, parsed.title, parsed.artist, DEFAULT_COVER);
+        return {
+          id: `gh:${FOLDER_NAME}/${file.name}`,
+          title: enriched.title,
+          artist: enriched.artist,
+          cover: enriched.cover,
+          lyrics: enriched.lyrics,
+          archiveUrl: null,
+          githubPath: `${FOLDER_NAME}/${file.name}`,
+          audio: null // Loaded on click
+        };
+      });
+    }
+
+    // Loads metadata first so cards appear immediately; falls back to GitHub if Archive has no tracks
+    async function autoDiscoverLibrary() {
       activePlaylist = null;
       renderPlaylists();
       trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading names & metadata...</div>';
 
       try {
-        const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/${FOLDER_NAME}`);
-        if (!apiRes.ok) throw new Error('API limit or repo private');
-        
-        const files = await apiRes.json();
-        const mp3Files = files.filter(f => f.name.toLowerCase().includes('.mp3'));
+        let tracks = await loadFromInternetArchive();
 
-        if (mp3Files.length === 0) {
-          trackGrid.innerHTML = `<div class="state-msg">No files found in <code>${FOLDER_NAME}/</code>.</div>`;
+        if (!tracks.length) {
+          tracks = await loadFromGitHubBackup();
+        }
+
+        libraryTracks = tracks;
+        currentTracks = libraryTracks;
+
+        if (!currentTracks.length) {
+          trackGrid.innerHTML = `<div class="state-msg">No MP3 tracks found in Internet Archive or <code>${FOLDER_NAME}/</code>.</div>`;
           return;
         }
 
-        libraryTracks = mp3Files.map(file => {
-          const meta = parseTrackMetadata(file);
-          const repoPath = `${FOLDER_NAME}/${file.name}`;
-          return {
-            fileName: file.name,
-            repoPath: repoPath,
-            title: meta.title,
-            artist: meta.artist,
-            cover: meta.cover,
-            lyrics: meta.lyrics,
-            audio: null // Loaded lazily on click
-          };
-        });
-
-        currentTracks = libraryTracks;
         renderGrid(currentTracks);
       } catch (err) {
         console.error(err);
-        trackGrid.innerHTML = '<div class="state-msg">Failed to load library items.</div>';
+        trackGrid.innerHTML = '<div class="state-msg">Failed to load library metadata.</div>';
       }
     }
 
-    // Resolves audio stream only when the user actually clicks/plays the track
+    // Resolves audio stream only when clicked: Archive first, GitHub CDN second
     async function resolveAudioUrlOnDemand(track) {
       if (track.audio) return track.audio;
 
-      for (const buildUrl of CDN_PROVIDERS) {
-        const candidate = buildUrl(track.repoPath);
+      if (track.archiveUrl) {
         try {
-          const res = await fetch(candidate, { method: 'HEAD' });
-          if (res.ok) {
-            track.audio = candidate;
-            return candidate;
+          const headRes = await fetch(track.archiveUrl, { method: 'HEAD' });
+          if (headRes.ok) {
+            track.audio = track.archiveUrl;
+            return track.audio;
           }
-        } catch (e) {}
+        } catch (e) {
+          // If HEAD is blocked by CORS/network, try direct Archive URL on audio element
+          track.audio = track.archiveUrl;
+          return track.audio;
+        }
       }
 
-      // Direct stream fallback to first CDN without blocking playback
-      track.audio = CDN_PROVIDERS[0](track.repoPath);
-      return track.audio;
+      if (track.githubPath) {
+        for (const buildUrl of GITHUB_BACKUP_CDNS) {
+          const candidate = buildUrl(track.githubPath);
+          try {
+            const res = await fetch(candidate, { method: 'HEAD' });
+            if (res.ok) {
+              track.audio = candidate;
+              return candidate;
+            }
+          } catch (e) {}
+        }
+        track.audio = GITHUB_BACKUP_CDNS[0](track.githubPath);
+        return track.audio;
+      }
+
+      return null;
     }
 
-    function loadGitHubLibrary() {
+    function loadLibraryView() {
       activePlaylist = null;
-      document.getElementById('feedTitle').textContent = "Soundcharts Hub";
-      document.getElementById('feedSub').textContent = "Instant metadata load • Audio streams on click";
-      document.getElementById('bannerImg').src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=60";
+      document.getElementById('feedTitle').textContent = "Archive Music Hub";
+      document.getElementById('feedSub').textContent = "Internet Archive primary • GitHub CDN backup • Audio streams on click";
+      bannerImg.src = DEFAULT_COVER;
       currentTracks = libraryTracks;
       renderGrid(currentTracks);
       renderPlaylists();
@@ -436,11 +541,7 @@
       currentTracks = userPlaylists[name].tracks || [];
       document.getElementById('feedTitle').textContent = name;
       document.getElementById('feedSub').textContent = `${currentTracks.length} songs`;
-      if (userPlaylists[name].image) {
-        document.getElementById('bannerImg').src = userPlaylists[name].image;
-      } else {
-        document.getElementById('bannerImg').src = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=300&auto=format&fit=crop&q=60";
-      }
+      bannerImg.src = userPlaylists[name].image || DEFAULT_COVER;
       renderGrid(currentTracks);
     }
 
@@ -452,12 +553,13 @@
       }
 
       tracks.forEach((track, index) => {
+        const safeCover = track.cover || DEFAULT_COVER;
         const card = document.createElement('div');
         card.className = 'track-card';
         card.innerHTML = `
           <button class="add-btn" title="Add to Playlist"><i class="fa-solid fa-plus"></i></button>
           <div class="card-img-wrap">
-            <img src="${track.cover}" loading="lazy" />
+            <img src="${safeCover}" alt="${track.title}" loading="lazy" onerror="this.src='${DEFAULT_COVER}'" />
             <div class="play-btn-overlay"><i class="fa-solid fa-play"></i></div>
           </div>
           <div class="card-title">${track.title}</div>
@@ -498,7 +600,8 @@
     document.getElementById('modalConfirmBtn').onclick = () => {
       const target = document.getElementById('modalPlaylistSelect').value;
       if (target && trackToAdd) {
-        if (!userPlaylists[target].tracks.some(t => t.repoPath === trackToAdd.repoPath)) {
+        const key = trackToAdd.id || trackToAdd.githubPath || trackToAdd.title;
+        if (!userPlaylists[target].tracks.some(t => (t.id || t.githubPath || t.title) === key)) {
           userPlaylists[target].tracks.push(trackToAdd);
           savePlaylists();
         }
@@ -545,16 +648,15 @@
       currentIndex = index;
       const track = currentTracks[currentIndex];
 
-      // Update UI immediately on click
       currTitle.textContent = track.title;
       currArtist.textContent = `${track.artist} • Loading audio...`;
-      currImg.src = track.cover;
+      currImg.src = track.cover || DEFAULT_COVER;
+      currImg.onerror = () => { currImg.src = DEFAULT_COVER; };
       lyricsText.textContent = track.lyrics || "No lyrics available.";
       playIcon.className = "fa-solid fa-spinner fa-spin";
 
-      // Resolve and load audio file only now
       const streamUrl = await resolveAudioUrlOnDemand(track);
-      if (requestId !== playRequestToken) return; // User clicked another track while loading
+      if (requestId !== playRequestToken) return;
 
       audio.src = streamUrl;
       audio.playbackRate = parseFloat(playbackSpeed.value);
@@ -565,8 +667,22 @@
         isPlaying = true;
         currArtist.textContent = track.artist;
         playIcon.className = "fa-solid fa-pause";
-      }).catch(err => {
-        console.error(err);
+      }).catch(async () => {
+        // Fallback to GitHub backup if Archive playback fails
+        if (track.githubPath && audio.src !== GITHUB_BACKUP_CDNS[0](track.githubPath)) {
+          const backupUrl = GITHUB_BACKUP_CDNS[0](track.githubPath);
+          track.audio = backupUrl;
+          audio.src = backupUrl;
+          audio.load();
+          try {
+            await audio.play();
+            if (requestId !== playRequestToken) return;
+            isPlaying = true;
+            currArtist.textContent = `${track.artist} (GitHub Backup)`;
+            playIcon.className = "fa-solid fa-pause";
+            return;
+          } catch (e2) {}
+        }
         isPlaying = false;
         currArtist.textContent = track.artist;
         playIcon.className = "fa-solid fa-play";
@@ -631,7 +747,7 @@
 
     document.getElementById('navHome').onclick = () => {
       if (isLyricsMode) lyricsToggleBtn.click();
-      loadGitHubLibrary();
+      loadLibraryView();
     };
 
     searchInput.oninput = (e) => {
@@ -642,7 +758,7 @@
     };
 
     renderPlaylists();
-    autoDiscoverMP3s();
+    autoDiscoverLibrary();
   </script>
 </body>
 </html>
