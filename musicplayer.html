@@ -176,7 +176,7 @@
       <div class="hero-banner">
         <img id="bannerImg" src="" alt="Library Cover" />
         <div>
-          <h1 id="feedTitle">Archive Music Hub</h1>
+          <h1 id="feedTitle">Octo Flow Archive</h1>
           <p id="feedSub">Internet Archive primary • GitHub CDN backup • Audio streams on click</p>
         </div>
       </div>
@@ -236,7 +236,6 @@
   <audio id="audioEngine" preload="none"></audio>
 
   <script>
-    // Reliable built-in cover fallback (no broken external URLs)
     const DEFAULT_COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
         <defs>
@@ -253,9 +252,8 @@
       </svg>
     `);
 
-    // Primary source: Internet Archive item identifiers
-    // Add archive.org item identifiers here to pull MP3s + cover art from Internet Archive
-    const ARCHIVE_ITEMS = [];
+    // Primary source: Internet Archive item from archive.org/details/ofa_20261121_202611
+    const ARCHIVE_ITEMS = ['ofa_20261121_202611'];
 
     // Backup source: GitHub repository
     const REPO_USER = 'CalcSolver';
@@ -317,7 +315,6 @@
     const lyricsViewContainer = document.getElementById('lyricsViewContainer');
     const lyricsText = document.getElementById('lyricsText');
 
-    // Set safe default images immediately
     bannerImg.src = DEFAULT_COVER;
     currImg.src = DEFAULT_COVER;
 
@@ -406,16 +403,22 @@
           const files = Array.isArray(data.files) ? data.files : [];
           const itemMeta = data.metadata || {};
 
-          // Find best cover image inside the Archive item
-          const imgFile = files.find(f => /\.(jpe?g|png|webp)$/i.test(f.name || ''));
+          if (itemMeta.title) {
+            document.getElementById('feedTitle').textContent = itemMeta.title;
+          }
+
+          // Use Archive item thumbnail/cover image if present, otherwise default cover
+          const imgFile = files.find(f => /\.(jpe?g|png|webp)$/i.test(f.name || '') && !/thumb/i.test(f.name || ''));
           const itemCover = imgFile
             ? `https://archive.org/download/${encodeURIComponent(itemId)}/${encodeURIComponent(imgFile.name)}`
-            : `https://archive.org/services/img/${encodeURIComponent(itemId)}`;
+            : DEFAULT_COVER;
+          bannerImg.src = itemCover;
+          bannerImg.onerror = () => { bannerImg.src = DEFAULT_COVER; };
 
           const mp3Files = files.filter(f => /\.mp3$/i.test(f.name || ''));
           for (const mp3 of mp3Files) {
             const parsed = formatFromFilename(mp3.name);
-            const title = mp3.title || (mp3Files.length === 1 && itemMeta.title) || parsed.title;
+            const title = mp3.title || parsed.title;
             const artist = mp3.artist || itemMeta.creator || parsed.artist;
             const enriched = applyMetadataEnrichment(mp3.name, title, artist, itemCover);
 
@@ -427,7 +430,7 @@
               lyrics: enriched.lyrics,
               archiveUrl: `https://archive.org/download/${encodeURIComponent(itemId)}/${encodeURIComponent(mp3.name)}`,
               githubPath: `${FOLDER_NAME}/${mp3.name}`,
-              audio: null // Loaded on click
+              audio: null
             });
           }
         } catch (err) {
@@ -456,16 +459,16 @@
           lyrics: enriched.lyrics,
           archiveUrl: null,
           githubPath: `${FOLDER_NAME}/${file.name}`,
-          audio: null // Loaded on click
+          audio: null
         };
       });
     }
 
-    // Loads metadata first so cards appear immediately; falls back to GitHub if Archive has no tracks
+    // Loads metadata first so cards appear immediately; falls back to GitHub if Archive returns no tracks
     async function autoDiscoverLibrary() {
       activePlaylist = null;
       renderPlaylists();
-      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading names & metadata...</div>';
+      trackGrid.innerHTML = '<div class="state-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading names & metadata from Archive...</div>';
 
       try {
         let tracks = await loadFromInternetArchive();
@@ -494,17 +497,8 @@
       if (track.audio) return track.audio;
 
       if (track.archiveUrl) {
-        try {
-          const headRes = await fetch(track.archiveUrl, { method: 'HEAD' });
-          if (headRes.ok) {
-            track.audio = track.archiveUrl;
-            return track.audio;
-          }
-        } catch (e) {
-          // If HEAD is blocked by CORS/network, try direct Archive URL on audio element
-          track.audio = track.archiveUrl;
-          return track.audio;
-        }
+        track.audio = track.archiveUrl;
+        return track.audio;
       }
 
       if (track.githubPath) {
@@ -527,7 +521,7 @@
 
     function loadLibraryView() {
       activePlaylist = null;
-      document.getElementById('feedTitle').textContent = "Archive Music Hub";
+      document.getElementById('feedTitle').textContent = "Octo Flow Archive";
       document.getElementById('feedSub').textContent = "Internet Archive primary • GitHub CDN backup • Audio streams on click";
       bannerImg.src = DEFAULT_COVER;
       currentTracks = libraryTracks;
@@ -668,7 +662,6 @@
         currArtist.textContent = track.artist;
         playIcon.className = "fa-solid fa-pause";
       }).catch(async () => {
-        // Fallback to GitHub backup if Archive playback fails
         if (track.githubPath && audio.src !== GITHUB_BACKUP_CDNS[0](track.githubPath)) {
           const backupUrl = GITHUB_BACKUP_CDNS[0](track.githubPath);
           track.audio = backupUrl;
