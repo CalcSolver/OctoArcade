@@ -286,6 +286,50 @@
 
     const DEFAULT_COVER = makeCoverDataUrl('Octo Music');
 
+    // Free album artwork lookup cache (persisted in localStorage)
+    const COVER_CACHE_KEY = 'octo_cover_cache_v1';
+    const coverCache = JSON.parse(localStorage.getItem(COVER_CACHE_KEY) || '{}');
+    const inflightCoverLookups = new Map();
+
+    async function fetchAlbumCover(title, artist) {
+      const cleanTitle = String(title || '')
+        .replace(/\([^)]*\)|\[[^\]]*\]/g, '')
+        .replace(/\b(lyrics|lyric|sped up|slowed|reverb|remix|edit|official|video|audio)\b/gi, '')
+        .trim();
+      const cleanArtist = (!artist || artist.toLowerCase() === 'unknown artist') ? '' : String(artist).trim();
+      const cacheKey = `${cleanArtist} - ${cleanTitle}`.toLowerCase().trim();
+
+      if (!cleanTitle) return null;
+      if (Object.prototype.hasOwnProperty.call(coverCache, cacheKey)) {
+        return coverCache[cacheKey];
+      }
+      if (inflightCoverLookups.has(cacheKey)) {
+        return inflightCoverLookups.get(cacheKey);
+      }
+
+      const promise = (async () => {
+        try {
+          const query = encodeURIComponent(`${cleanTitle} ${cleanArtist}`.trim());
+          const res = await fetch(`https://itunes.apple.com/search?term=${query}&media=music&entity=song&limit=1`);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const item = data.results && data.results[0];
+          const art = item && (item.artworkUrl100 || item.artworkUrl60);
+          const highResArt = art ? art.replace(/100x100bb|60x60bb/, '400x400bb') : null;
+          coverCache[cacheKey] = highResArt;
+          try { localStorage.setItem(COVER_CACHE_KEY, JSON.stringify(coverCache)); } catch (e) {}
+          return highResArt;
+        } catch (e) {
+          return null;
+        } finally {
+          inflightCoverLookups.delete(cacheKey);
+        }
+      })();
+
+      inflightCoverLookups.set(cacheKey, promise);
+      return promise;
+    }
+
     // Primary source: Internet Archive item identifier
     const ARCHIVE_ITEMS = ['ofa_20261121_202611'];
 
@@ -466,7 +510,6 @@
       });
     }
 
-    // 1. Primary: Load real item + file metadata from Internet Archive API
     async function loadFromInternetArchive() {
       if (!ARCHIVE_ITEMS.length) return [];
 
@@ -479,7 +522,6 @@
           const files = Array.isArray(data.files) ? data.files : [];
           const meta = data.metadata || {};
 
-          // Collect text/lrc/srt lyric files if present in the item
           const lyricContents = {};
           const lyricFiles = files.filter(f => /\.(lrc|srt|txt)$/i.test(f.name || '') && !/meta\.xml|files\.xml/i.test(f.name || ''));
           for (const lf of lyricFiles) {
@@ -493,7 +535,6 @@
             } catch (e) {}
           }
 
-          // Find best cover image inside the item
           const imgFile = files.find(f => /\.(jpe?g|png|webp)$/i.test(f.name || '') && !/thumb/i.test(f.name || ''));
           const itemCover = imgFile
             ? `https://archive.org/download/${encodeURIComponent(itemId)}/${encodeURIComponent(imgFile.name)}`
@@ -535,6 +576,7 @@
               album: enriched.album,
               metaLine: detailParts.join(' • '),
               cover: enriched.cover,
+              hasRealCover: Boolean(imgFile),
               lyrics: enriched.lyrics,
               source: 'archive',
               archiveUrl: `https://archive.org/download/${encodeURIComponent(itemId)}/${encodeURIComponent(mp3.name)}`,
@@ -549,7 +591,6 @@
       return tracks;
     }
 
-    // 2. Backup: Load tracks + metadata from GitHub repository
     async function loadFromGitHubBackup() {
       const apiRes = await fetch(`https://api.github.com/repos/${REPO_USER}/${REPO_NAME}/contents/${FOLDER_NAME}`);
       if (!apiRes.ok) throw new Error('GitHub API request failed');
@@ -567,6 +608,7 @@
           album: parsed.album,
           metaLine: 'GitHub Backup',
           cover: enriched.cover,
+          hasRealCover: false,
           lyrics: enriched.lyrics,
           source: 'github',
           archiveUrl: null,
@@ -622,7 +664,6 @@
       }
     }
 
-    // Resolves audio stream on click: Internet Archive first, GitHub CDN second
     async function resolveAudioUrlOnDemand(track) {
       if (track.audio) return track.audio;
 
@@ -689,6 +730,21 @@
           <div class="card-artist">${track.artist}</div>
           ${track.metaLine ? `<div class="card-meta">${track.metaLine}</div>` : ''}
         `;
+
+        const imgEl = card.querySelector('.card-img-wrap img');
+
+        if (!track.hasRealCover) {
+          fetchAlbumCover(track.title, track.artist).then(foundCover => {
+            if (foundCover) {
+              track.cover = foundCover;
+              track.hasRealCover = true;
+              imgEl.src = foundCover;
+              if (currentIndex === index && currentTracks[currentIndex] === track) {
+                currImg.src = foundCover;
+              }
+            }
+          });
+        }
 
         card.onclick = (e) => {
           if (!e.target.closest('.add-btn')) playTrack(index);
@@ -779,6 +835,16 @@
       currImg.onerror = () => { currImg.src = fallbackCover; };
       lyricsText.textContent = track.lyrics || "No lyrics available.";
       playIcon.className = "fa-solid fa-spinner fa-spin";
+
+      if (!track.hasRealCover) {
+        fetchAlbumCover(track.title, track.artist).then(foundCover => {
+          if (foundCover && currentIndex === index && currentTracks[currentIndex] === track) {
+            track.cover = foundCover;
+            track.hasRealCover = true;
+            currImg.src = foundCover;
+          }
+        });
+      }
 
       const streamUrl = await resolveAudioUrlOnDemand(track);
       if (requestId !== playRequestToken) return;
